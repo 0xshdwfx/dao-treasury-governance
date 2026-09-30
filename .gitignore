@@ -1,0 +1,27 @@
+# Foundry compiler output
+contracts/cache/
+contracts/out/
+
+# Foundry broadcast logs
+contracts/broadcast/
+!contracts/broadcast/
+!contracts/broadcast/*/
+!contracts/broadcast/*/31337/
+!contracts/broadcast/**/dry-run/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Foundry keystores
+contracts/.foundry/keystores/
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# macOS
+.DS_Store

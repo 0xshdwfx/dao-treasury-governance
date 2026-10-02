@@ -6,7 +6,16 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 
+/**
+ * @author 0xshdwfx
+ * @title Shadow Governance Token
+ * @notice ERC-20 governance token with delegation, checkpoints, and permit approvals.
+ * @dev The complete initial supply is minted to the deployer during construction.
+ */
 contract ShadowToken is ERC20, ERC20Permit, ERC20Votes {
+    /**
+     * @notice Deploys the Shadow governance token and mints the initial supply to the deployer.
+     */
     constructor() ERC20("Shadow", "SHDW") ERC20Permit("Shadow") {
         _mint(msg.sender, 1_000_000e18);
     }

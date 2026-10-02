@@ -187,3 +187,27 @@ The following features are outside the scope of this portfolio implementation:
 - professional external audits.
 
 These exclusions keep the implementation focused on the core governance, Timelock, and Treasury lifecycle.
+
+## 10. Selected Architecture
+
+The project will use the following contract architecture:
+
+    ERC20Votes → Governor → TimelockController → Treasury
+
+### ERC20Votes
+
+The Shadow token will use OpenZeppelin's voting-token functionality to support delegated and checkpointed voting power.
+
+### Governor
+
+The Governor will manage proposal creation, voting, quorum, and proposal outcomes.
+
+### TimelockController
+
+The TimelockController will delay successful proposals before execution.
+
+### Treasury
+
+The Treasury will hold ETH and ERC-20 tokens. It will restrict outgoing transfers so that only the TimelockController can cause them.
+
+OpenZeppelin's standard governance components will be used where they satisfy the confirmed specification. Any custom behaviour required by this project must be documented and tested explicitly.

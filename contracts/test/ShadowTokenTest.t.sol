@@ -16,12 +16,12 @@ contract ShadowTokenTest is Test {
         shadowToken = new ShadowToken();
     }
 
-    function test_NameAndSymbol() public {
+    function test_NameAndSymbol() public view {
         assertEq(shadowToken.name(), "Shadow");
         assertEq(shadowToken.symbol(), "SHDW");
     }
 
-    function test_InitialSupplyAllocatedToDeployer() public {
+    function test_InitialSupplyAllocatedToDeployer() public view {
         assertEq(shadowToken.totalSupply(), INITIAL_SUPPLY);
         assertEq(shadowToken.balanceOf(deployer), INITIAL_SUPPLY);
     }

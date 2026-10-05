@@ -30,4 +30,8 @@ contract ShadowTokenTest is Test {
     function test_TokenDecimalsAreEighteen() public view {
         assertEq(shadowToken.decimals(), TOKEN_DECIMALS, "token decimals should equal 18");
     }
+
+    function test_PermitNonceStartsAtZeroForDeployer() public view {
+        assertEq(shadowToken.nonces(deployer), 0, "deployer permit nonce should start at zero");
+    }
 }

@@ -2,15 +2,18 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/Console.sol";
 import {ShadowToken} from "../src/ShadowToken.sol";
 
 contract ShadowTokenTest is Test {
     ShadowToken public shadowToken;
 
     address public deployer = makeAddr("deployer");
+    address public recipient = makeAddr("recipient");
 
     uint256 private constant INITIAL_SUPPLY = 1_000_000e18;
     uint8 private constant TOKEN_DECIMALS = 18;
+    uint256 private constant TRANSFER_AMOUNT = 100;
 
     function setUp() public {
         vm.prank(deployer);
@@ -33,5 +36,30 @@ contract ShadowTokenTest is Test {
 
     function test_PermitNonceStartsAtZeroForDeployer() public view {
         assertEq(shadowToken.nonces(deployer), 0, "deployer permit nonce should start at zero");
+    }
+
+    function test_TokenTransferDecreasesDeployerBalanceAndIncreasesRecipientBalance() public {
+        vm.startPrank(deployer);
+
+        uint256 recipientBalanceBeforeTransfer = shadowToken.balanceOf(recipient);
+        uint256 deployerBalanceBeforeTransfer = shadowToken.balanceOf(deployer);
+
+        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+
+        uint256 recipientBalanceAfterTransfer = shadowToken.balanceOf(recipient);
+        uint256 deployerBalanceAfterTransfer = shadowToken.balanceOf(deployer);
+
+        vm.stopPrank();
+
+        assertEq(
+            recipientBalanceAfterTransfer,
+            recipientBalanceBeforeTransfer + TRANSFER_AMOUNT,
+            "recipient balance should increase by transfer amount"
+        );
+        assertEq(
+            deployerBalanceAfterTransfer,
+            deployerBalanceBeforeTransfer - TRANSFER_AMOUNT,
+            "deployer balance should decrease by transfer amount"
+        );
     }
 }

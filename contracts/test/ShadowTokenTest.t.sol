@@ -18,13 +18,13 @@ contract ShadowTokenTest is Test {
     }
 
     function test_TokenMetadataMatchesSpecification() public view {
-        assertEq(shadowToken.name(), "Shadow");
-        assertEq(shadowToken.symbol(), "SHDW");
+        assertEq(shadowToken.name(), "Shadow", "token name should be Shadow");
+        assertEq(shadowToken.symbol(), "SHDW", "token symbol should be SHDW");
     }
 
     function test_InitialSupplyIsFullyAllocatedToDeployer() public view {
-        assertEq(shadowToken.totalSupply(), INITIAL_SUPPLY);
-        assertEq(shadowToken.balanceOf(deployer), INITIAL_SUPPLY);
+        assertEq(shadowToken.totalSupply(), INITIAL_SUPPLY, "total supply should equal initial supply");
+        assertEq(shadowToken.balanceOf(deployer), INITIAL_SUPPLY, "deployer should receive the initial supply");
     }
 
     function test_TokenDecimalsAreEighteen() public view {

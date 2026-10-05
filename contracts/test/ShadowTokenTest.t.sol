@@ -62,4 +62,12 @@ contract ShadowTokenTest is Test {
             "deployer balance should decrease by transfer amount"
         );
     }
+
+    function test_SelfDelegationAssignsVotingPower() public {
+        vm.prank(deployer);
+
+        shadowToken.delegate(deployer);
+
+        assertEq(shadowToken.getVotes(deployer), INITIAL_SUPPLY);
+    }
 }

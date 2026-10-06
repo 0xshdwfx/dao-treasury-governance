@@ -20,6 +20,10 @@ contract ShadowTokenTest is Test {
         shadowToken = new ShadowToken();
     }
 
+    ////////////////////////////
+    /// Token Configuration ///
+    //////////////////////////
+
     function test_TokenMetadataMatchesSpecification() public view {
         assertEq(shadowToken.name(), "Shadow", "token name should be Shadow");
         assertEq(shadowToken.symbol(), "SHDW", "token symbol should be SHDW");
@@ -34,9 +38,17 @@ contract ShadowTokenTest is Test {
         assertEq(shadowToken.decimals(), TOKEN_DECIMALS, "token decimals should equal 18");
     }
 
+    ///////////////////////
+    /// ERC20Permit    ///
+    /////////////////////
+
     function test_PermitNonceStartsAtZeroForDeployer() public view {
         assertEq(shadowToken.nonces(deployer), 0, "deployer permit nonce should start at zero");
     }
+
+    ////////////////////////
+    /// ERC20 Transfers ///
+    //////////////////////
 
     function test_TokenTransferDecreasesDeployerBalanceAndIncreasesRecipientBalance() public {
         vm.startPrank(deployer);
@@ -62,6 +74,10 @@ contract ShadowTokenTest is Test {
             "deployer balance should decrease by transfer amount"
         );
     }
+
+    ////////////////////////
+    /// ERC20Votes      ///
+    //////////////////////
 
     function test_SelfDelegationAssignsVotingPower() public {
         vm.prank(deployer);

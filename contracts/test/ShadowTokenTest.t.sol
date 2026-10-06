@@ -38,9 +38,9 @@ contract ShadowTokenTest is Test {
         assertEq(shadowToken.decimals(), TOKEN_DECIMALS, "token decimals should equal 18");
     }
 
-    ///////////////////////
-    /// ERC20Permit    ///
-    /////////////////////
+    ////////////////////
+    /// ERC20Permit ///
+    ///////////////////
 
     function test_PermitNonceStartsAtZeroForDeployer() public view {
         assertEq(shadowToken.nonces(deployer), 0, "deployer permit nonce should start at zero");
@@ -75,9 +75,9 @@ contract ShadowTokenTest is Test {
         );
     }
 
-    ////////////////////////
-    /// ERC20Votes      ///
-    //////////////////////
+    ///////////////////
+    /// ERC20Votes ///
+    /////////////////
 
     function test_SelfDelegationAssignsVotingPower() public {
         vm.prank(deployer);

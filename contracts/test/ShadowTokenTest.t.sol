@@ -106,4 +106,17 @@ contract ShadowTokenTest is Test {
 
         assertEq(recipientVotingPowerAfterTransfer, 0, "recipient voting power should still be zero after transfer");
     }
+
+    function test_RecipientSelfDelegationAssignsTransferredTokenBalanceAsVotingPower() public {
+        assertEq(shadowToken.getVotes(recipient), 0, "recipient voting power should start at zero");
+
+        vm.prank(deployer);
+        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+
+        vm.prank(recipient);
+        shadowToken.delegate(recipient);
+
+        assertEq(shadowToken.getVotes(recipient), TRANSFER_AMOUNT);
+        assertEq(shadowToken.balanceOf(recipient), TRANSFER_AMOUNT);
+    }
 }

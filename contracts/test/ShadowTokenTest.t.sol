@@ -70,4 +70,40 @@ contract ShadowTokenTest is Test {
 
         assertEq(shadowToken.getVotes(deployer), INITIAL_SUPPLY);
     }
+
+    function test_DelegatedDeployerVotingPowerDecreasesWhenTokensAreTransferred() public {
+        vm.startPrank(deployer);
+
+        shadowToken.delegate(deployer);
+
+        uint256 deployerVotingPowerBeforeTransfer = shadowToken.getVotes(deployer);
+        uint256 recipientVotingPowerBeforeTransfer = shadowToken.getVotes(recipient);
+
+        assertEq(
+            shadowToken.getVotes(deployer), INITIAL_SUPPLY, "deployer should have all the initial supply voting power"
+        );
+
+        assertEq(shadowToken.getVotes(recipient), 0, "recipient voting power should start at zero");
+
+        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+
+        uint256 deployerVotingPowerAfterTransfer = shadowToken.getVotes(deployer);
+        uint256 recipientVotingPowerAfterTransfer = shadowToken.getVotes(recipient);
+
+        vm.stopPrank();
+
+        assertEq(
+            deployerVotingPowerAfterTransfer,
+            deployerVotingPowerBeforeTransfer - TRANSFER_AMOUNT,
+            "deployer voting power should decrease by transfer amount"
+        );
+
+        assertEq(
+            recipientVotingPowerAfterTransfer,
+            recipientVotingPowerBeforeTransfer,
+            "recipient's voting power should remain zero as they have not delegated"
+        );
+
+        assertEq(recipientVotingPowerAfterTransfer, 0, "recipient voting power should still be zero after transfer");
+    }
 }

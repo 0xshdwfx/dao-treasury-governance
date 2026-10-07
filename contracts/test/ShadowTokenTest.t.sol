@@ -135,4 +135,33 @@ contract ShadowTokenTest is Test {
         assertEq(shadowToken.getVotes(recipient), TRANSFER_AMOUNT);
         assertEq(shadowToken.balanceOf(recipient), TRANSFER_AMOUNT);
     }
+
+    function test_HistoricalDeployerVotingPowerRemainsUnchangedAfterTokenTransfer() public {
+        vm.startPrank(deployer);
+        shadowToken.delegate(deployer);
+
+        uint256 blockNumber = block.number;
+
+        assertEq(shadowToken.getVotes(deployer), INITIAL_SUPPLY, "deployer voting power should equal INITIAL_SUPPLY");
+
+        vm.roll(block.number + 1);
+
+        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+
+        assertEq(
+            shadowToken.getVotes(deployer),
+            INITIAL_SUPPLY - TRANSFER_AMOUNT,
+            "deployer's current voting power should decrease by TRANSFER_AMOUNT after transfer"
+        );
+
+        uint256 deployerVotingPowerAtEarlierBlock = shadowToken.getPastVotes(deployer, blockNumber);
+
+        vm.stopPrank();
+
+        assertEq(
+            deployerVotingPowerAtEarlierBlock,
+            INITIAL_SUPPLY,
+            "deployer historical voting power should equal INITIAL_SUPPLY"
+        );
+    }
 }

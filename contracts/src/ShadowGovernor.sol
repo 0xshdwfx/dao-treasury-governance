@@ -9,6 +9,12 @@ import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/Gover
 import {GovernorTimelockControl} from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
+/**
+ * @title Shadow Governor
+ * @author 0xshdwfx
+ * @notice Manages SHDW proposals, voting, quorum, and Timelock-controlled execution.
+ * @dev Uses an absolute quorum and fixed governance settings defined by the contract constants.
+ */
 contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl {
     ////////////////////////
     /// State Variables ///
@@ -26,6 +32,12 @@ contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
     /// Constructor ///
     ///////////////////
 
+    /**
+     * @notice Deploys the Shadow Governor with the configured SHDW token and Timelock.
+     * @param name_ The human-readable name of the Governor.
+     * @param shadowToken The Shadow governance token used for voting power.
+     * @param timelockAddress The TimelockController responsible for delayed execution.
+     */
     constructor(string memory name_, ShadowToken shadowToken, TimelockController timelockAddress)
         Governor(name_)
         GovernorSettings(VOTING_DELAY, VOTING_PERIOD, PROPOSAL_THRESHOLD)
@@ -39,6 +51,10 @@ contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
     /// Quorum ///
     //////////////
 
+    /**
+     * @notice Returns the absolute quorum required for a proposal.
+     * @return The fixed quorum expressed in SHDW base units.
+     */
     function quorum(uint256) public view override returns (uint256) {
         return QUORUM;
     }

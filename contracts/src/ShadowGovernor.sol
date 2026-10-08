@@ -7,23 +7,45 @@ import {GovernorSettings} from "@openzeppelin/contracts/governance/extensions/Go
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import {GovernorTimelockControl} from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl {
     ////////////////////////
     /// State Variables ///
-    //////////////////////
+    ///////////////////////
 
     ShadowToken public immutable SHADOW_TOKEN;
 
     uint256 public constant QUORUM = 40_000e18;
     uint256 public constant PROPOSAL_THRESHOLD = 10_000e18;
-    uint256 public constant VOTING_DELAY = 1 minutes;
-    uint256 public constant VOTING_PERIOD = 5 minutes;
+    uint48 public constant VOTING_DELAY = 1 minutes;
+    uint32 public constant VOTING_PERIOD = 5 minutes;
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
+
+    ////////////////////
+    /// Constructor ///
+    ///////////////////
+
+    constructor(string memory name_, ShadowToken shadowToken, TimelockController timelockAddress)
+        Governor(name_)
+        GovernorSettings(VOTING_DELAY, VOTING_PERIOD, PROPOSAL_THRESHOLD)
+        GovernorVotes(shadowToken)
+        GovernorTimelockControl(timelockAddress)
+    {
+        SHADOW_TOKEN = shadowToken;
+    }
+
+    ///////////////
+    /// Quorum ///
+    //////////////
+
+    function quorum(uint256) public view override returns (uint256) {
+        return QUORUM;
+    }
 
     ///////////////////////////
     /// Function Overrides ///
-    /////////////////////////
+    //////////////////////////
 
     function _cancel(
         address[] memory targets,

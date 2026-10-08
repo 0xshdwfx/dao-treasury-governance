@@ -20,6 +20,10 @@ contract ShadowToken is ERC20, ERC20Permit, ERC20Votes {
         _mint(msg.sender, 1_000_000e18);
     }
 
+    ///////////////////////////
+    /// Function Overrides ///
+    /////////////////////////
+
     function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }

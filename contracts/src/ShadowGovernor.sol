@@ -71,4 +71,14 @@ contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
     function proposalThreshold() public view virtual override(Governor, GovernorSettings) returns (uint256) {
         return super.proposalThreshold();
     }
+
+    function state(uint256 proposalId)
+        public
+        view
+        virtual
+        override(Governor, GovernorTimelockControl)
+        returns (ProposalState)
+    {
+        return super.state(proposalId);
+    }
 }

@@ -43,4 +43,18 @@ contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
     ) internal virtual override(Governor, GovernorTimelockControl) {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
+
+    function _executor() internal view virtual override(Governor, GovernorTimelockControl) returns (address) {
+        return super._executor();
+    }
+
+    function _queueOperations(
+        uint256 proposalId,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal virtual override(Governor, GovernorTimelockControl) returns (uint48) {
+        return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
+    }
 }

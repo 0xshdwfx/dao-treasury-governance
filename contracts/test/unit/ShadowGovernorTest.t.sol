@@ -25,11 +25,19 @@ contract ShadowGovernorTest is Test {
         shadowToken = new ShadowToken();
 
         vm.prank(deployer);
-        timelockController = new TimelockController(TIMELOCK_DELAY, proposers, executors, deployer);
+        timelockController = new TimelockController(TIMELOCK_DELAY, proposers, executors, address(this));
 
         vm.prank(deployer);
         shadowGovernor = new ShadowGovernor(GOVERNOR_NAME, shadowToken, timelockController);
 
         timelockController.grantRole(timelockController.PROPOSER_ROLE(), address(shadowGovernor));
+    }
+
+    ///////////////////////////////
+    /// Governor Configuration ///
+    /////////////////////////////
+
+    function test_GovernorNameMatchesSpecification() public pure {
+        assertEq(GOVERNOR_NAME, "Shadow Governor", "Governor name should be Shadow Governor");
     }
 }

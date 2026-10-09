@@ -25,9 +25,11 @@ contract ShadowGovernorTest is Test {
         shadowToken = new ShadowToken();
 
         vm.prank(deployer);
-        timelockController = new TimelockController(TIMELOCK_DELAY, proposers, executors, address(0));
+        timelockController = new TimelockController(TIMELOCK_DELAY, proposers, executors, deployer);
 
         vm.prank(deployer);
         shadowGovernor = new ShadowGovernor(GOVERNOR_NAME, shadowToken, timelockController);
+
+        timelockController.grantRole(timelockController.PROPOSER_ROLE(), address(shadowGovernor));
     }
 }

@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+import {Test} from "forge-std/Test.sol";
+import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
+import {ShadowToken} from "../../src/ShadowToken.sol";
+import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+
+contract ShadowGovernorTest is Test {
+    ShadowToken public shadowToken;
+    TimelockController public timelockController;
+    ShadowGovernor public shadowGovernor;
+
+    address public deployer = makeAddr("deployer");
+
+    string public constant GOVERNOR_NAME = "Shadow Governor";
+    uint256 public constant TIMELOCK_DELAY = 2 minutes;
+
+    function setUp() public {
+        address[] memory proposers = new address[](0);
+        address[] memory executors = new address[](1);
+        executors[0] = address(0);
+
+        vm.prank(deployer);
+        shadowToken = new ShadowToken();
+
+        vm.prank(deployer);
+        timelockController = new TimelockController(TIMELOCK_DELAY, proposers, executors, address(0));
+
+        vm.prank(deployer);
+        shadowGovernor = new ShadowGovernor(GOVERNOR_NAME, shadowToken, timelockController);
+    }
+}

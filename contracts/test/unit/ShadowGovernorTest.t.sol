@@ -15,6 +15,7 @@ contract ShadowGovernorTest is Test {
 
     string public constant GOVERNOR_NAME = "Shadow Governor";
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
+    // uint48 private constant VOTING_DELAY = 1 minutes;
 
     function setUp() public {
         address[] memory proposers = new address[](0);
@@ -39,5 +40,9 @@ contract ShadowGovernorTest is Test {
 
     function test_GovernorNameMatchesSpecification() public pure {
         assertEq(GOVERNOR_NAME, "Shadow Governor", "Governor name should be Shadow Governor");
+    }
+
+    function test_VotingDelayMatchesSpecification() public view {
+        assertEq(shadowGovernor.VOTING_DELAY(), 1 minutes, "Governor voting delay should be 1 minute");
     }
 }

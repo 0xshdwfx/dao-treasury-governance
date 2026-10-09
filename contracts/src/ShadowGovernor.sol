@@ -26,7 +26,6 @@ contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
     uint256 public constant PROPOSAL_THRESHOLD = 10_000e18;
     uint48 public constant VOTING_DELAY = 1 minutes;
     uint32 public constant VOTING_PERIOD = 5 minutes;
-    uint256 public constant TIMELOCK_DELAY = 2 minutes;
 
     ////////////////////
     /// Constructor ///

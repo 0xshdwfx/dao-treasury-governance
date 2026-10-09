@@ -54,7 +54,7 @@ contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
      * @notice Returns the absolute quorum required for a proposal.
      * @return The fixed quorum expressed in SHDW base units.
      */
-    function quorum(uint256) public view override returns (uint256) {
+    function quorum(uint256) public pure override returns (uint256) {
         return QUORUM;
     }
 

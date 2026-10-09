@@ -56,7 +56,8 @@ contract ShadowTokenTest is Test {
         uint256 recipientBalanceBeforeTransfer = shadowToken.balanceOf(recipient);
         uint256 deployerBalanceBeforeTransfer = shadowToken.balanceOf(deployer);
 
-        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        bool success = shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        assertTrue(success, "token transfer should succeed");
 
         uint256 recipientBalanceAfterTransfer = shadowToken.balanceOf(recipient);
         uint256 deployerBalanceAfterTransfer = shadowToken.balanceOf(deployer);
@@ -101,7 +102,8 @@ contract ShadowTokenTest is Test {
 
         assertEq(shadowToken.getVotes(recipient), 0, "recipient voting power should start at zero");
 
-        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        bool success = shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        assertTrue(success, "token transfer should succeed");
 
         uint256 deployerVotingPowerAfterTransfer = shadowToken.getVotes(deployer);
         uint256 recipientVotingPowerAfterTransfer = shadowToken.getVotes(recipient);
@@ -127,7 +129,9 @@ contract ShadowTokenTest is Test {
         assertEq(shadowToken.getVotes(recipient), 0, "recipient voting power should start at zero");
 
         vm.prank(deployer);
-        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+
+        bool success = shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        assertTrue(success, "token transfer should succeed");
 
         vm.prank(recipient);
         shadowToken.delegate(recipient);
@@ -153,7 +157,8 @@ contract ShadowTokenTest is Test {
 
         vm.roll(block.number + 1);
 
-        shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        bool success = shadowToken.transfer(recipient, TRANSFER_AMOUNT);
+        assertTrue(success, "token transfer should succeed");
 
         assertEq(
             shadowToken.getVotes(deployer),

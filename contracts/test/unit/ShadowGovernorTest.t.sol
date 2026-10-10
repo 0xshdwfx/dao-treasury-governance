@@ -52,4 +52,8 @@ contract ShadowGovernorTest is Test {
     function test_ProposalThresholdMatchesSpecification() public view {
         assertEq(shadowGovernor.PROPOSAL_THRESHOLD(), 10_000e18, "Governor proposal threshold should equal 10,000 SHDW");
     }
+
+    function test_QuorumMatchesSpecification() public view {
+        assertEq(shadowGovernor.QUORUM(), 40_000e18, "Governor quorum should equal 40,000 voting units");
+    }
 }

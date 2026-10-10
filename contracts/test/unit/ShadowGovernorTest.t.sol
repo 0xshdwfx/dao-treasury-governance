@@ -48,4 +48,8 @@ contract ShadowGovernorTest is Test {
     function test_VotingPeriodMatchesSpecification() public view {
         assertEq(shadowGovernor.VOTING_PERIOD(), 5 minutes, "Governor voting period should be 5 minutes");
     }
+
+    function test_ProposalThresholdMatchesSpecification() public view {
+        assertEq(shadowGovernor.PROPOSAL_THRESHOLD(), 10_000e18, "Governor proposal threshold should equal 10,000 SHDW");
+    }
 }

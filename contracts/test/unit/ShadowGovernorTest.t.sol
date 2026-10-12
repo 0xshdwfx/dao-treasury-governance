@@ -14,6 +14,7 @@ contract ShadowGovernorTest is Test {
 
     address public deployer = makeAddr("deployer");
     address public belowThresholdProposer = makeAddr("belowThresholdProposer");
+    address public thresholdProposer = makeAddr("thresholdProposer");
 
     string public constant GOVERNOR_NAME = "Shadow Governor";
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
@@ -96,5 +97,34 @@ contract ShadowGovernorTest is Test {
         vm.prank(belowThresholdProposer);
 
         shadowGovernor.propose(targets, values, calldatas, "Proposal created below threshold");
+    }
+
+    function test_ProposalCreationSucceedsAtThreshold() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW voting power transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.roll(block.number + 1);
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
+
+        vm.stopPrank();
+
+        assertGt(proposalId, 0, "proposal ID should be greater than zero");
     }
 }

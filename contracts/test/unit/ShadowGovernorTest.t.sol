@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+import {IGovernor} from "@openzeppelin/contracts/governance/Governor.sol";
 
 contract ShadowGovernorTest is Test {
     ShadowToken public shadowToken;
@@ -12,6 +13,7 @@ contract ShadowGovernorTest is Test {
     ShadowGovernor public shadowGovernor;
 
     address public deployer = makeAddr("deployer");
+    address public belowThresholdProposer = makeAddr("belowThresholdProposer");
 
     string public constant GOVERNOR_NAME = "Shadow Governor";
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
@@ -67,5 +69,32 @@ contract ShadowGovernorTest is Test {
             shadowGovernor.QUORUM(),
             "Quorum function should return 40,000 voting units"
         );
+    }
+
+    ////////////////////////////
+    /// Proposal Validation ///
+    //////////////////////////
+
+    function test_ProposalCreationRevertsBelowThreshold() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGovernor.GovernorInsufficientProposerVotes.selector,
+                belowThresholdProposer,
+                0,
+                shadowGovernor.PROPOSAL_THRESHOLD()
+            )
+        );
+
+        vm.prank(belowThresholdProposer);
+
+        shadowGovernor.propose(targets, values, calldatas, "Proposal created below threshold");
     }
 }

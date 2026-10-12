@@ -56,4 +56,16 @@ contract ShadowGovernorTest is Test {
     function test_QuorumMatchesSpecification() public view {
         assertEq(shadowGovernor.QUORUM(), 40_000e18, "Governor quorum should equal 40,000 voting units");
     }
+
+    function test_QuorumFunctionReturnsFixedQuorum() public view {
+        assertEq(shadowGovernor.quorum(0), shadowGovernor.QUORUM(), "Quorum function should return 40,000 voting units");
+        assertEq(
+            shadowGovernor.quorum(1000), shadowGovernor.QUORUM(), "Quorum function should return 40,000 voting units"
+        );
+        assertEq(
+            shadowGovernor.quorum(1_000_000),
+            shadowGovernor.QUORUM(),
+            "Quorum function should return 40,000 voting units"
+        );
+    }
 }

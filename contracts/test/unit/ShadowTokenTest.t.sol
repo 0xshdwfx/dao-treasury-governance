@@ -154,7 +154,7 @@ contract ShadowTokenTest is Test {
 
         assertEq(shadowToken.getVotes(deployer), INITIAL_SUPPLY, "deployer voting power should equal INITIAL_SUPPLY");
 
-        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
 
         bool success = shadowToken.transfer(recipient, TRANSFER_AMOUNT);
         assertTrue(success, "token transfer should succeed");

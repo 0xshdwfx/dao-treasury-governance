@@ -7,7 +7,6 @@ import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
-import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
 
 contract ShadowGovernorTest is Test {
     ShadowToken public shadowToken;
@@ -121,7 +120,7 @@ contract ShadowGovernorTest is Test {
 
         shadowToken.delegate(thresholdProposer);
 
-        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
 
         uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
 
@@ -150,7 +149,7 @@ contract ShadowGovernorTest is Test {
 
         shadowToken.delegate(thresholdProposer);
 
-        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
 
         uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
 

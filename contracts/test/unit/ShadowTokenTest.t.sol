@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import {console} from "forge-std/Console.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
 
 contract ShadowTokenTest is Test {

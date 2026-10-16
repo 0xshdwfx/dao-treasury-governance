@@ -18,6 +18,7 @@ contract ShadowGovernorTest is Test {
     address public thresholdProposer = makeAddr("thresholdProposer");
     address public forVoter = makeAddr("forVoter");
     address public againstVoter = makeAddr("againstVoter");
+    address public abstainVoter = makeAddr("abstainVoter");
 
     string public constant GOVERNOR_NAME = "Shadow Governor";
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
@@ -483,10 +484,10 @@ contract ShadowGovernorTest is Test {
 
         vm.startPrank(deployer);
         bool forVoterSuccess = shadowToken.transfer(forVoter, forVotes);
-        assertTrue(forVoterSuccess, "SHDW transfer of 20_000e18 to forVoter should succeed");
+        assertTrue(forVoterSuccess, "SHDW transfer of half quorum to forVoter should succeed");
 
         bool againstVoterSuccess = shadowToken.transfer(againstVoter, againstVotes);
-        assertTrue(againstVoterSuccess, "SHDW transfer of 20_000e18 againstVoter should succeed");
+        assertTrue(againstVoterSuccess, "SHDW transfer of half quorum to againstVoter should succeed");
 
         bool success = shadowToken.transfer(thresholdProposer, threshold);
         assertTrue(success, "SHDW threshold transfer should succeed");
@@ -534,6 +535,77 @@ contract ShadowGovernorTest is Test {
             uint256(shadowGovernor.state(proposalId)),
             uint256(IGovernor.ProposalState.Defeated),
             "proposal state should be Defeated when total votes for and against are tied"
+        );
+    }
+
+    function test_ProposalSucceedsWhenForAndAbstainVotesReachQuorum() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 quorum = shadowGovernor.QUORUM();
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
+
+        uint256 forVotes = quorum / 2;
+        uint256 abstainVotes = quorum / 2;
+
+        vm.startPrank(deployer);
+        bool forVoterSuccess = shadowToken.transfer(forVoter, forVotes);
+        assertTrue(forVoterSuccess, "SHDW transfer of half quorum to forVoter should succeed");
+
+        bool abstainVoterSuccess = shadowToken.transfer(abstainVoter, abstainVotes);
+        assertTrue(abstainVoterSuccess, "SHDW transfer of half quorum to abstainVoter should succeed");
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW threshold transfer should succeed");
+        vm.stopPrank();
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId =
+            shadowGovernor.propose(targets, values, calldatas, "Proposal created at proposal threshold");
+
+        vm.stopPrank();
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.prank(forVoter);
+        shadowToken.delegate(forVoter);
+
+        vm.prank(abstainVoter);
+        shadowToken.delegate(abstainVoter);
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        vm.prank(forVoter);
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+        vm.prank(abstainVoter);
+        shadowGovernor.castVote(proposalId, ABSTAIN_VOTE);
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Succeeded),
+            "proposal state should be Succeeded when for and abstain votes reach quorum"
         );
     }
 

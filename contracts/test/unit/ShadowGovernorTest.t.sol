@@ -16,6 +16,7 @@ contract ShadowGovernorTest is Test {
     address public deployer = makeAddr("deployer");
     address public belowThresholdProposer = makeAddr("belowThresholdProposer");
     address public thresholdProposer = makeAddr("thresholdProposer");
+    address public zeroPowerVoter = makeAddr("zeroPowerVoter");
     address public forVoter = makeAddr("forVoter");
     address public againstVoter = makeAddr("againstVoter");
     address public abstainVoter = makeAddr("abstainVoter");
@@ -25,6 +26,7 @@ contract ShadowGovernorTest is Test {
     uint8 public constant AGAINST_VOTE = 0;
     uint8 public constant FOR_VOTE = 1;
     uint8 public constant ABSTAIN_VOTE = 2;
+    uint8 public constant INVALID_VOTE = 3;
 
     function setUp() public {
         address[] memory proposers = new address[](0);
@@ -815,6 +817,51 @@ contract ShadowGovernorTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, thresholdProposer));
 
         shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.stopPrank();
+    }
+
+    function test_VoterCannotCastVoteWithInvalidSupportType() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW voting power transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        vm.expectRevert(IGovernor.GovernorInvalidVoteType.selector);
+
+        shadowGovernor.castVote(proposalId, INVALID_VOTE);
 
         vm.stopPrank();
     }

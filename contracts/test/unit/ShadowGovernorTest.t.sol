@@ -995,6 +995,73 @@ contract ShadowGovernorTest is Test {
         );
     }
 
+    function test_DefeatedProposalCannotBeQueued() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 quorum = shadowGovernor.QUORUM();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, quorum - 1);
+        assertTrue(success, "SHDW below-quorum transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId =
+            shadowGovernor.propose(targets, values, calldatas, "Proposal created one unit below quorum");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Defeated),
+            "proposal state should be Defeated when total votes are one unit below quorum"
+        );
+
+        bytes32 expectedStates = bytes32(uint256(1) << uint8(IGovernor.ProposalState.Succeeded));
+
+        bytes32 descriptionHash = keccak256(bytes("Proposal created one unit below quorum"));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGovernor.GovernorUnexpectedProposalState.selector,
+                proposalId,
+                IGovernor.ProposalState.Defeated,
+                expectedStates
+            )
+        );
+
+        shadowGovernor.queue(targets, values, calldatas, descriptionHash);
+
+        vm.stopPrank();
+    }
+
     ///////////////////////////
     /// Timelock Execution ///
     /////////////////////////

@@ -81,6 +81,10 @@ contract ShadowGovernorTest is Test {
         );
     }
 
+    function test_TimelockDelayMatchesSpecification() public view {
+        assertEq(timelockController.getMinDelay(), 2 minutes, "timelock delay must be equal to 2 minutes");
+    }
+
     ////////////////////////////
     /// Proposal Validation ///
     //////////////////////////

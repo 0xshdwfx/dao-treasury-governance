@@ -101,6 +101,11 @@ contract ShadowGovernorTest is Test {
         );
     }
 
+    function test_GovernorUsesTimestampClock() public view {
+        assertEq(shadowGovernor.CLOCK_MODE(), "mode=timestamp", "Governor clock mode should be timestamp");
+        assertEq(shadowGovernor.clock(), block.timestamp, "Governor clock should equal the current block timestamp");
+    }
+
     ////////////////////////////
     /// Proposal Validation ///
     //////////////////////////

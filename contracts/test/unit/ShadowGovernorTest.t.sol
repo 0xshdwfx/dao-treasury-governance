@@ -265,7 +265,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalSucceedsAfterQuorumAndMajorityForVote() public {
+    function test_ProposalSucceedsWhenForVotesReachQuorumAndExceedAgainstVotes() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

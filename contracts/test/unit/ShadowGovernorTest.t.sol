@@ -316,7 +316,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalDefeatedAfterQuorumAndMajorityAgainstVote() public {
+    function test_ProposalDefeatedWhenAgainstVotesExceedForVotesDespiteQuorum() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -325,12 +325,23 @@ contract ShadowGovernorTest is Test {
         values[0] = 0;
         calldatas[0] = bytes("");
 
+        uint256 againstVotes;
+        uint256 forVotes;
+        uint256 abstainVotes;
+
         uint256 quorum = shadowGovernor.QUORUM();
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
 
-        vm.prank(deployer);
+        vm.startPrank(deployer);
+        bool forVoterSuccess = shadowToken.transfer(forVoter, quorum);
+        assertTrue(forVoterSuccess, "SHDW transfer of quorum to forVoter should succeed");
 
-        bool success = shadowToken.transfer(thresholdProposer, quorum);
-        assertTrue(success, "SHDW quorum transfer should succeed");
+        bool againstVoterSuccess = shadowToken.transfer(againstVoter, quorum + 1);
+        assertTrue(againstVoterSuccess, "SHDW transfer of quorum + 1 to againstVoter should succeed");
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW threshold transfer should succeed");
+        vm.stopPrank();
 
         vm.startPrank(thresholdProposer);
 
@@ -338,13 +349,21 @@ contract ShadowGovernorTest is Test {
 
         vm.warp(block.timestamp + 1);
 
-        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created at exactly quorum");
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created at threshold");
+
+        vm.stopPrank();
 
         assertEq(
             uint256(shadowGovernor.state(proposalId)),
             uint256(IGovernor.ProposalState.Pending),
             "proposal should start in Pending state"
         );
+
+        vm.prank(forVoter);
+        shadowToken.delegate(forVoter);
+
+        vm.prank(againstVoter);
+        shadowToken.delegate(againstVoter);
 
         vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
 
@@ -354,11 +373,18 @@ contract ShadowGovernorTest is Test {
             "proposal should be Active after voting delay"
         );
 
+        vm.prank(forVoter);
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+        vm.prank(againstVoter);
         shadowGovernor.castVote(proposalId, AGAINST_VOTE);
 
-        vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
+        (againstVotes, forVotes, abstainVotes) = shadowGovernor.proposalVotes(proposalId);
 
-        vm.stopPrank();
+        assertEq(forVotes, quorum, "for votes should be equal to quorum");
+        assertEq(againstVotes, quorum + 1, "against votes should be equal to quorum + 1");
+        assertEq(abstainVotes, 0, "abstain votes should be zero");
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
 
         assertEq(
             uint256(shadowGovernor.state(proposalId)),

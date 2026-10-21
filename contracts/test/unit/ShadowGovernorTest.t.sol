@@ -1095,11 +1095,84 @@ contract ShadowGovernorTest is Test {
 
         (againstVotes, forVotes, abstainVotes) = shadowGovernor.proposalVotes(proposalId);
 
+        vm.stopPrank();
+
         assertEq(againstVotes, 0, "againstVotes should equal 0");
         assertEq(forVotes, threshold, "forVotes should equal the original proposal threshold");
         assertEq(abstainVotes, 0, "abstainVotes should equal 0");
+    }
+
+    function test_PostSnapshotTokenRecipientCannotReuseVotingPower() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 againstVotes;
+        uint256 forVotes;
+        uint256 abstainVotes;
+
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW voting power transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        uint256 amount = shadowToken.balanceOf(thresholdProposer);
+        bool proposerTransferSuccess = shadowToken.transfer(testUser, amount);
+        assertTrue(
+            proposerTransferSuccess, "SHDW voting power transfer from proposer to separate address should succeed"
+        );
+
+        assertEq(shadowToken.getVotes(thresholdProposer), 0, "threshold voting power should be zero");
 
         vm.stopPrank();
+
+        vm.startPrank(testUser);
+
+        shadowToken.delegate(testUser);
+
+        assertEq(shadowToken.getVotes(testUser), threshold, "test user voting power should equal threshold amount");
+
+        uint256 postSnapshotVoteWeight = shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        (againstVotes, forVotes, abstainVotes) = shadowGovernor.proposalVotes(proposalId);
+
+        vm.stopPrank();
+
+        assertEq(postSnapshotVoteWeight, 0, "test user vote weight should be zero for this proposal");
+
+        assertEq(againstVotes, 0, "againstVotes should equal 0");
+        assertEq(forVotes, threshold, "forVotes should equal the original proposal threshold");
+        assertEq(abstainVotes, 0, "abstainVotes should equal 0");
     }
 
     //////////////////////////

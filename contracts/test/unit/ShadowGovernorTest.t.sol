@@ -16,7 +16,6 @@ contract ShadowGovernorTest is Test {
     address public deployer = makeAddr("deployer");
     address public belowThresholdProposer = makeAddr("belowThresholdProposer");
     address public thresholdProposer = makeAddr("thresholdProposer");
-    address public zeroPowerVoter = makeAddr("zeroPowerVoter");
     address public forVoter = makeAddr("forVoter");
     address public againstVoter = makeAddr("againstVoter");
     address public abstainVoter = makeAddr("abstainVoter");
@@ -50,20 +49,20 @@ contract ShadowGovernorTest is Test {
     /// Governor Configuration ///
     /////////////////////////////
 
-    function test_GovernorNameMatchesSpecification() public pure {
-        assertEq(GOVERNOR_NAME, "Shadow Governor", "Governor name should be Shadow Governor");
+    function test_GovernorNameMatchesSpecification() public view {
+        assertEq(shadowGovernor.name(), "Shadow Governor", "Governor name should be Shadow Governor");
     }
 
     function test_VotingDelayMatchesSpecification() public view {
-        assertEq(shadowGovernor.VOTING_DELAY(), 1 minutes, "Governor voting delay should be 1 minute");
+        assertEq(shadowGovernor.votingDelay(), 1 minutes, "Governor voting delay should be 1 minute");
     }
 
     function test_VotingPeriodMatchesSpecification() public view {
-        assertEq(shadowGovernor.VOTING_PERIOD(), 5 minutes, "Governor voting period should be 5 minutes");
+        assertEq(shadowGovernor.votingPeriod(), 5 minutes, "Governor voting period should be 5 minutes");
     }
 
     function test_ProposalThresholdMatchesSpecification() public view {
-        assertEq(shadowGovernor.PROPOSAL_THRESHOLD(), 10_000e18, "Governor proposal threshold should equal 10,000 SHDW");
+        assertEq(shadowGovernor.proposalThreshold(), 10_000e18, "Governor proposal threshold should equal 10,000 SHDW");
     }
 
     function test_QuorumMatchesSpecification() public view {

@@ -85,6 +85,14 @@ contract ShadowGovernorTest is Test {
         assertEq(timelockController.getMinDelay(), 2 minutes, "timelock delay must be equal to 2 minutes");
     }
 
+    function test_GovernorUsesConfiguredVotingToken() public view {
+        assertEq(
+            address(shadowGovernor.token()),
+            address(shadowToken),
+            "Governor voting token should match the deployed ShadowToken"
+        );
+    }
+
     ////////////////////////////
     /// Proposal Validation ///
     //////////////////////////

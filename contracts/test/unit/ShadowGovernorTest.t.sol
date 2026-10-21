@@ -7,6 +7,7 @@ import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 contract ShadowGovernorTest is Test {
     ShadowToken public shadowToken;
@@ -1795,6 +1796,33 @@ contract ShadowGovernorTest is Test {
         );
 
         shadowGovernor.execute(targets, values, calldatas, descriptionHash);
+
+        vm.stopPrank();
+    }
+
+    ////////////////////////////////
+    /// Timelock Access Control ///
+    //////////////////////////////
+
+    function test_UnauthorizedUserCannotScheduleTimelockOperation() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        bytes32 neededRole = timelockController.PROPOSER_ROLE();
+        uint256 delay = timelockController.getMinDelay();
+
+        vm.startPrank(testUser);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, testUser, neededRole)
+        );
+
+        timelockController.scheduleBatch(targets, values, calldatas, bytes32(0), bytes32(0), delay);
 
         vm.stopPrank();
     }

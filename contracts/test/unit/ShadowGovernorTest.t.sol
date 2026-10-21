@@ -93,6 +93,14 @@ contract ShadowGovernorTest is Test {
         );
     }
 
+    function test_GovernorUsesConfiguredTimelock() public view {
+        assertEq(
+            address(shadowGovernor.timelock()),
+            address(timelockController),
+            "Governor timelock should match the deployed TimelockController"
+        );
+    }
+
     ////////////////////////////
     /// Proposal Validation ///
     //////////////////////////

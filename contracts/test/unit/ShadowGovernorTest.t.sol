@@ -479,18 +479,19 @@ contract ShadowGovernorTest is Test {
         values[0] = 0;
         calldatas[0] = bytes("");
 
+        uint256 againstVotes;
+        uint256 forVotes;
+        uint256 abstainVotes;
+
         uint256 quorum = shadowGovernor.QUORUM();
         uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
 
-        uint256 forVotes = quorum / 2;
-        uint256 againstVotes = quorum / 2;
-
         vm.startPrank(deployer);
-        bool forVoterSuccess = shadowToken.transfer(forVoter, forVotes);
-        assertTrue(forVoterSuccess, "SHDW transfer of half quorum to forVoter should succeed");
+        bool forVoterSuccess = shadowToken.transfer(forVoter, quorum);
+        assertTrue(forVoterSuccess, "SHDW transfer of quorum to forVoter should succeed");
 
-        bool againstVoterSuccess = shadowToken.transfer(againstVoter, againstVotes);
-        assertTrue(againstVoterSuccess, "SHDW transfer of half quorum to againstVoter should succeed");
+        bool againstVoterSuccess = shadowToken.transfer(againstVoter, quorum);
+        assertTrue(againstVoterSuccess, "SHDW transfer of quorum to againstVoter should succeed");
 
         bool success = shadowToken.transfer(thresholdProposer, threshold);
         assertTrue(success, "SHDW threshold transfer should succeed");
@@ -531,6 +532,12 @@ contract ShadowGovernorTest is Test {
         shadowGovernor.castVote(proposalId, FOR_VOTE);
         vm.prank(againstVoter);
         shadowGovernor.castVote(proposalId, AGAINST_VOTE);
+
+        (againstVotes, forVotes, abstainVotes) = shadowGovernor.proposalVotes(proposalId);
+
+        assertEq(forVotes, quorum, "for votes should be equal to quorum");
+        assertEq(againstVotes, quorum, "against votes should be equal to quorum");
+        assertEq(abstainVotes, 0, "abstain votes should be zero");
 
         vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
 

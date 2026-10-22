@@ -717,6 +717,53 @@ contract ShadowGovernorTest is Test {
         );
     }
 
+    function test_NonProposerCannotCancelPendingProposal() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW voting power transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.stopPrank();
+
+        bytes32 descriptionHash = keccak256(bytes("Proposal created exactly at threshold"));
+
+        vm.prank(testUser);
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorUnableToCancel.selector, proposalId, testUser));
+
+        shadowGovernor.cancel(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should remain in Pending state after non proposer attempts to cancel"
+        );
+    }
+
     ///////////////
     /// Voting ///
     //////////////

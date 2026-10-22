@@ -764,6 +764,61 @@ contract ShadowGovernorTest is Test {
         );
     }
 
+    function test_ProposerCannotCancelActiveProposal() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0x123);
+        values[0] = 0;
+        calldatas[0] = bytes("");
+
+        uint256 threshold = shadowGovernor.PROPOSAL_THRESHOLD();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, threshold);
+        assertTrue(success, "SHDW voting power transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Proposal created exactly at threshold");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        bytes32 descriptionHash = keccak256(bytes("Proposal created exactly at threshold"));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorUnableToCancel.selector, proposalId, thresholdProposer)
+        );
+
+        shadowGovernor.cancel(targets, values, calldatas, descriptionHash);
+
+        vm.stopPrank();
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should remain in Active state after proposer attempts to cancel once proposal is Active"
+        );
+    }
+
     ///////////////
     /// Voting ///
     //////////////

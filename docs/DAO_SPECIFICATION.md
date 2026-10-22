@@ -44,7 +44,6 @@ The Treasury holds ETH and ERC-20 tokens. It only allows transfers that are caus
 | Voting period             | 5 minutes                     |
 | Quorum                    | 40,000 voting units           |
 | Timelock delay            | 2 minutes                     |
-| Execution window          | 24 hours after becoming ready |
 
 The initial allocation of the complete SHDW supply to the deployer is a deliberate portfolio simplification. It creates a centralisation risk because the deployer initially controls all token-based voting power.
 
@@ -79,7 +78,7 @@ A proposal that does not meet both conditions is defeated and must not be queued
 
 A proposal follows this lifecycle:
 
-    Pending → Active → Succeeded or Defeated → Queued → Ready → Executed or Expired
+    Pending → Active → Succeeded or Defeated → Queued → Ready → Executed
 
 ### Pending
 
@@ -103,15 +102,11 @@ A successful proposal has been submitted to the Timelock. Anyone may queue a suc
 
 ### Ready
 
-The two-minute Timelock delay has elapsed. The proposal can now be executed.
+The two-minute Timelock delay has elapsed. The proposal can now be executed. There is no automatic execution deadline.
 
 ### Executed
 
 The proposal actions have been executed successfully. Anyone may execute a ready proposal.
-
-### Expired
-
-The proposal became ready but was not executed within the 24-hour execution window.
 
 ## 6. Authority Model
 
@@ -149,8 +144,7 @@ A Treasury transfer may occur only after:
 1. A proposal has succeeded.
 2. The proposal has been queued.
 3. The Timelock delay has elapsed.
-4. The proposal has not expired.
-5. The proposal has not already been executed.
+4. The proposal has not already been executed.
 
 If a proposal contains multiple actions, all actions must execute as one operation. If any action fails, the complete operation must fail.
 
@@ -161,7 +155,7 @@ This project assumes that:
 - the governance token correctly records delegated voting power;
 - voting power is read from the correct historical checkpoint;
 - the Governor correctly enforces the proposal threshold, voting period, quorum, and passing conditions;
-- the Timelock correctly enforces the execution delay and execution window;
+- the Timelock correctly enforces the execution delay;
 - proposal actions and encoded calldata are reviewed before voting;
 - deployment roles and permissions are configured correctly;
 - the Treasury correctly restricts transfers to the Timelock;
@@ -170,6 +164,8 @@ This project assumes that:
 The complete initial SHDW supply is allocated to the deployer. This is a deliberate portfolio simplification and creates a centralisation risk. The deployer initially controls all token-based voting power and may therefore have significant influence over proposals.
 
 This design is not presented as a production-ready decentralised governance distribution model. A production system would require a more carefully designed token distribution, stronger operational controls, and additional review.
+
+Queued operations do not automatically expire. Once the Timelock delay has elapsed, an approved operation remains executable until it is executed or cancelled. An old approval may therefore be executed after circumstances have changed.
 
 ## 9. Out of Scope
 

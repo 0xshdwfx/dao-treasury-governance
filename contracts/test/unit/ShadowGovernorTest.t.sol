@@ -20,7 +20,7 @@ contract ShadowGovernorTest is Test {
     address public forVoter = makeAddr("forVoter");
     address public againstVoter = makeAddr("againstVoter");
     address public abstainVoter = makeAddr("abstainVoter");
-    address public testUser = makeAddr("testUser");
+    address public ordinaryUser = makeAddr("ordinaryUser");
 
     string public constant GOVERNOR_NAME = "Shadow Governor";
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
@@ -105,6 +105,12 @@ contract ShadowGovernorTest is Test {
     function test_GovernorUsesTimestampClock() public view {
         assertEq(shadowGovernor.CLOCK_MODE(), "mode=timestamp", "Governor clock mode should be timestamp");
         assertEq(shadowGovernor.clock(), block.timestamp, "Governor clock should equal the current block timestamp");
+    }
+
+    function test_GovernorRequiresProposalQueueing() public view {
+        assertTrue(
+            shadowGovernor.proposalNeedsQueuing(0), "Governor should require proposals to be queued before execution"
+        );
     }
 
     ////////////////////////////
@@ -751,9 +757,9 @@ contract ShadowGovernorTest is Test {
 
         bytes32 descriptionHash = keccak256(bytes("Proposal created exactly at threshold"));
 
-        vm.prank(testUser);
+        vm.prank(ordinaryUser);
 
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorUnableToCancel.selector, proposalId, testUser));
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorUnableToCancel.selector, proposalId, ordinaryUser));
 
         shadowGovernor.cancel(targets, values, calldatas, descriptionHash);
 
@@ -1291,7 +1297,7 @@ contract ShadowGovernorTest is Test {
         );
 
         uint256 amount = shadowToken.balanceOf(thresholdProposer);
-        bool proposerTransferSuccess = shadowToken.transfer(testUser, amount);
+        bool proposerTransferSuccess = shadowToken.transfer(ordinaryUser, amount);
         assertTrue(
             proposerTransferSuccess, "SHDW voting power transfer from proposer to separate address should succeed"
         );
@@ -1354,7 +1360,7 @@ contract ShadowGovernorTest is Test {
         shadowGovernor.castVote(proposalId, FOR_VOTE);
 
         uint256 amount = shadowToken.balanceOf(thresholdProposer);
-        bool proposerTransferSuccess = shadowToken.transfer(testUser, amount);
+        bool proposerTransferSuccess = shadowToken.transfer(ordinaryUser, amount);
         assertTrue(
             proposerTransferSuccess, "SHDW voting power transfer from proposer to separate address should succeed"
         );
@@ -1363,11 +1369,11 @@ contract ShadowGovernorTest is Test {
 
         vm.stopPrank();
 
-        vm.startPrank(testUser);
+        vm.startPrank(ordinaryUser);
 
-        shadowToken.delegate(testUser);
+        shadowToken.delegate(ordinaryUser);
 
-        assertEq(shadowToken.getVotes(testUser), threshold, "test user voting power should equal threshold amount");
+        assertEq(shadowToken.getVotes(ordinaryUser), threshold, "test user voting power should equal threshold amount");
 
         uint256 postSnapshotVoteWeight = shadowGovernor.castVote(proposalId, FOR_VOTE);
 
@@ -1499,7 +1505,7 @@ contract ShadowGovernorTest is Test {
 
         bytes32 descriptionHash = keccak256(bytes("Proposal created at exactly quorum"));
 
-        vm.prank(testUser);
+        vm.prank(ordinaryUser);
 
         shadowGovernor.queue(targets, values, calldatas, descriptionHash);
 
@@ -1941,7 +1947,7 @@ contract ShadowGovernorTest is Test {
 
         vm.warp(shadowGovernor.proposalEta(proposalId));
 
-        vm.prank(testUser);
+        vm.prank(ordinaryUser);
 
         shadowGovernor.execute(targets, values, calldatas, descriptionHash);
 
@@ -2034,10 +2040,10 @@ contract ShadowGovernorTest is Test {
         bytes32 neededRole = timelockController.PROPOSER_ROLE();
         uint256 delay = timelockController.getMinDelay();
 
-        vm.startPrank(testUser);
+        vm.startPrank(ordinaryUser);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, testUser, neededRole)
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, ordinaryUser, neededRole)
         );
 
         timelockController.scheduleBatch(targets, values, calldatas, bytes32(0), bytes32(0), delay);

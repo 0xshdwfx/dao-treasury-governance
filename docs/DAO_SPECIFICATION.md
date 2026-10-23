@@ -45,6 +45,8 @@ The Treasury holds ETH and ERC-20 tokens. It only allows transfers that are caus
 | Quorum                    | 40,000 voting units           |
 | Timelock delay            | 2 minutes                     |
 
+The voting delay, voting period, and proposal threshold listed above are initial values. They may later be changed through successful governance proposals executed via the Timelock. The quorum remains fixed at 40,000 voting units.
+
 The initial allocation of the complete SHDW supply to the deployer is a deliberate portfolio simplification. It creates a centralisation risk because the deployer initially controls all token-based voting power.
 
 ### Timing Assumption
@@ -55,7 +57,7 @@ The voting delay and voting period are intentionally short so the complete gover
 
 Voting power is based on delegated SHDW voting units.
 
-A proposal may be created only when the proposer has at least 10,000 delegated voting power.
+A proposal may be created only when the proposer meets the current proposal threshold. The initial threshold is 10,000 delegated voting units and may later be changed through governance.
 
 Each voter may vote once on a proposal using one of three choices:
 
@@ -82,11 +84,11 @@ A proposal follows this lifecycle:
 
 ### Pending
 
-The proposal has been created, but voting has not started. The proposal remains pending for the one-minute voting delay.
+The proposal has been created, but voting has not started. Its voting start time is determined using the voting delay configured when the proposal is created. The initial voting delay is one minute.
 
 ### Active
 
-The voting delay has ended and voters may cast their votes. Voting remains active for five minutes.
+Voting has started and voters may cast their votes. The proposal's voting period is determined by the setting configured when the proposal is created. The initial voting period is five minutes.
 
 ### Succeeded
 

@@ -13,7 +13,8 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
  * @title Shadow Governor
  * @author 0xshdwfx
  * @notice Manages SHDW proposals, voting, quorum, and Timelock-controlled execution.
- * @dev Uses an absolute quorum and fixed governance settings defined by the contract constants.
+ * @dev Uses a fixed absolute quorum. Voting delay, voting period, and proposal threshold are initialised from
+ *      constants and can later be changed through governance.
  */
 contract ShadowGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl {
     ////////////////////////

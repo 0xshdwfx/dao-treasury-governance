@@ -63,11 +63,11 @@ Each voter may vote once on a proposal using one of three choices:
 - Against
 - Abstain
 
-Abstain votes count towards quorum but do not count as either For or Against votes.
+Only For and Abstain votes count towards quorum. Against votes do not count towards quorum. Abstain votes do not count as either For or Against votes.
 
 A proposal succeeds only when both conditions are true:
 
-1. Total voting participation reaches at least 40,000 voting units.
+1. For votes plus Abstain votes reach at least 40,000 voting units.
 2. For votes are strictly greater than Against votes.
 
 A proposal with equal For and Against votes fails, even if quorum has been reached.

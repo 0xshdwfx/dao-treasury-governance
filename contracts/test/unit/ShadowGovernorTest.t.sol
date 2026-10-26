@@ -2070,4 +2070,87 @@ contract ShadowGovernorTest is Test {
             "voting delay should remain equal to shadowGovernor.VOTING_DELAY()"
         );
     }
+
+    ////////////////////////////
+    /// Governance Settings ///
+    //////////////////////////
+
+    function test_GovernanceCanChangeVotingDelayThroughTimelock() public {
+        uint48 newVotingDelay = 2 minutes;
+
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(shadowGovernor);
+        values[0] = 0;
+        calldatas[0] = abi.encodeCall(shadowGovernor.setVotingDelay, (newVotingDelay));
+
+        uint256 quorum = shadowGovernor.QUORUM();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, quorum);
+        assertTrue(success, "SHDW quorum transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Change voting delay to two minutes");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Succeeded),
+            "proposal state should be Succeeded after voting period ends"
+        );
+
+        bytes32 descriptionHash = keccak256(bytes("Change voting delay to two minutes"));
+
+        shadowGovernor.queue(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should be Queued"
+        );
+
+        vm.warp(shadowGovernor.proposalEta(proposalId));
+
+        shadowGovernor.execute(targets, values, calldatas, descriptionHash);
+
+        vm.stopPrank();
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Executed),
+            "proposal state should be Executed after timelock delay"
+        );
+
+        assertEq(
+            shadowGovernor.votingDelay(),
+            newVotingDelay,
+            "shadowGovernor.votingDelay() should equal new voting delay of 2 minutes"
+        );
+    }
 }

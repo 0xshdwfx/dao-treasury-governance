@@ -2238,4 +2238,100 @@ contract ShadowGovernorTest is Test {
             "proposal state should still be Queued"
         );
     }
+
+    ////////////////////////
+    /// Batch Execution ///
+    //////////////////////
+
+    function test_FailedBatchActionRollsBackEarlierActions() public {
+        uint48 newVotingDelay = 2 minutes;
+        uint32 zeroPeriod = 0;
+
+        address[] memory targets = new address[](2);
+        uint256[] memory values = new uint256[](2);
+        bytes[] memory calldatas = new bytes[](2);
+
+        targets[0] = address(shadowGovernor);
+        targets[1] = address(shadowGovernor);
+        values[0] = 0;
+        values[1] = 0;
+        calldatas[0] = abi.encodeCall(shadowGovernor.setVotingDelay, (newVotingDelay));
+        calldatas[1] = abi.encodeCall(shadowGovernor.setVotingPeriod, (zeroPeriod));
+
+        uint256 quorum = shadowGovernor.QUORUM();
+
+        vm.prank(deployer);
+
+        bool success = shadowToken.transfer(thresholdProposer, quorum);
+        assertTrue(success, "SHDW quorum transfer should succeed");
+
+        vm.startPrank(thresholdProposer);
+
+        shadowToken.delegate(thresholdProposer);
+
+        vm.warp(block.timestamp + 1);
+
+        uint256 proposalId =
+            shadowGovernor.propose(targets, values, calldatas, "Update voting delay and set invalid voting period");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_DELAY() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.warp(block.timestamp + shadowGovernor.VOTING_PERIOD() + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Succeeded),
+            "proposal state should be Succeeded after voting period ends"
+        );
+
+        bytes32 descriptionHash = keccak256(bytes("Update voting delay and set invalid voting period"));
+
+        shadowGovernor.queue(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should be Queued"
+        );
+
+        vm.warp(shadowGovernor.proposalEta(proposalId));
+
+        vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorInvalidVotingPeriod.selector, uint256(0)));
+
+        shadowGovernor.execute(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            shadowGovernor.votingDelay(),
+            shadowGovernor.VOTING_DELAY(),
+            "shadowGovernor.votingDelay() should equal value of shadowGovernor.VOTING_DELAY()"
+        );
+
+        assertEq(
+            shadowGovernor.votingPeriod(),
+            shadowGovernor.VOTING_PERIOD(),
+            "shadowGovernor.votingPeriod() should equal value of shadowGovernor.VOTING_PERIOD()"
+        );
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should remain Queued"
+        );
+    }
 }

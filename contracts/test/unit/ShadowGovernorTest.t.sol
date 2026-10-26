@@ -2050,4 +2050,24 @@ contract ShadowGovernorTest is Test {
 
         vm.stopPrank();
     }
+
+    ///////////////////////////////////////////
+    /// Governance Settings Access Control ///
+    /////////////////////////////////////////
+
+    function test_OrdinaryUserCannotChangeVotingDelay() public {
+        uint48 newVotingDelay = 2 minutes;
+
+        vm.prank(ordinaryUser);
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorOnlyExecutor.selector, ordinaryUser));
+
+        shadowGovernor.setVotingDelay(newVotingDelay);
+
+        assertEq(
+            shadowGovernor.votingDelay(),
+            shadowGovernor.VOTING_DELAY(),
+            "voting delay should remain equal to shadowGovernor.VOTING_DELAY()"
+        );
+    }
 }

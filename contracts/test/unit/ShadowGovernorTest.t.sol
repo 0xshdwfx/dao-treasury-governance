@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {stdError} from "forge-std/StdError.sol";
 import {console} from "forge-std/console.sol";
 import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
@@ -2061,6 +2062,22 @@ contract ShadowGovernorTest is Test {
         vm.prank(ordinaryUser);
 
         vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorOnlyExecutor.selector, ordinaryUser));
+
+        shadowGovernor.setVotingDelay(newVotingDelay);
+
+        assertEq(
+            shadowGovernor.votingDelay(),
+            shadowGovernor.VOTING_DELAY(),
+            "voting delay should remain equal to shadowGovernor.VOTING_DELAY()"
+        );
+    }
+
+    function test_TimelockCannotChangeVotingDelayOutsideGovernorExecution() public {
+        uint48 newVotingDelay = 2 minutes;
+
+        vm.prank(address(timelockController));
+
+        vm.expectRevert(stdError.popError);
 
         shadowGovernor.setVotingDelay(newVotingDelay);
 

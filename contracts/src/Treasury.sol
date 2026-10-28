@@ -64,6 +64,13 @@ contract Treasury is Ownable {
     /// Functions /////
     ///////////////////
 
+    /**
+     * @notice Sends ETH held by the Treasury to the specified recipient.
+     * @dev Callable only by the configured Timelock owner. Reverts for a zero-address
+     *      recipient, a zero amount, insufficient ETH balance, or a failed transfer.
+     * @param recipient The payable address receiving the ETH.
+     * @param amount The amount of ETH to send, expressed in wei.
+     */
     function transferETH(address payable recipient, uint256 amount) external onlyOwner {
         if (recipient == address(0)) revert Treasury__InvalidRecipient();
 

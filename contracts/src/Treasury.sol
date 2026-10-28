@@ -13,6 +13,7 @@ contract Treasury is Ownable {
     /////////////////
 
     event ETHTransferred(address indexed recipient, uint256 amount);
+    event ERC20Transferred(address indexed token, address indexed recipient, uint256 requestedAmount);
 
     /////////////////
     /// Errors //////
@@ -23,6 +24,8 @@ contract Treasury is Ownable {
     error Treasury__InvalidTransferAmount();
     error Treasury__TransferAmountExceedsTreasuryBalance();
     error Treasury__ETHTransferFailed();
+    error Treasury__InvalidTokenAddress();
+    error Treasury__TransferAmountExceedsTokenBalance();
 
     //////////////////////
     //// Constructor ////
@@ -59,5 +62,19 @@ contract Treasury is Ownable {
         if (!success) revert Treasury__ETHTransferFailed();
 
         emit ETHTransferred(recipient, amount);
+    }
+
+    function transferERC20(address token, address recipient, uint256 amount) external onlyOwner {
+        if (token == address(0)) revert Treasury__InvalidTokenAddress();
+
+        if (recipient == address(0)) revert Treasury__InvalidRecipient();
+
+        if (amount == 0) revert Treasury__InvalidTransferAmount();
+
+        if (amount > IERC20(token).balanceOf(address(this))) revert Treasury__TransferAmountExceedsTokenBalance();
+
+        IERC20(token).safeTransfer(recipient, amount);
+
+        emit ERC20Transferred(token, recipient, amount);
     }
 }

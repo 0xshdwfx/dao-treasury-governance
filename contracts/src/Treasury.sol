@@ -5,6 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title DAO Treasury
+ * @author 0xshdwfx
+ * @notice Holds ETH and ERC-20 tokens and restricts withdrawals to the configured Timelock owner.
+ * @dev The owner is set during deployment. Ownership transfer and renunciation are disabled.
+ */
 contract Treasury is Ownable {
     using SafeERC20 for IERC20;
 

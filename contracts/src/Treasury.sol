@@ -8,7 +8,29 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 contract Treasury is Ownable {
     using SafeERC20 for IERC20;
 
+    /////////////////
+    /// Errors //////
+    /////////////////
+
+    error Treasury__OwnershipChangeDisabled();
+
+    //////////////////////
+    //// Constructor ////
+    ////////////////////
+
     constructor(address timelockAddress) Ownable(timelockAddress) {}
 
     receive() external payable {}
+
+    ///////////////////////////
+    /// Function Overrides ///
+    //////////////////////////
+
+    function transferOwnership(address) public override onlyOwner {
+        revert Treasury__OwnershipChangeDisabled();
+    }
+
+    function renounceOwnership() public override onlyOwner {
+        revert Treasury__OwnershipChangeDisabled();
+    }
 }

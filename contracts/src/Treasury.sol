@@ -37,6 +37,10 @@ contract Treasury is Ownable {
     //// Constructor ////
     ////////////////////
 
+    /**
+     * @notice Deploys the Treasury with the supplied Timelock address as its owner.
+     * @param timelockAddress The TimelockController authorised to withdraw Treasury assets.
+     */
     constructor(address timelockAddress) Ownable(timelockAddress) {}
 
     receive() external payable {}

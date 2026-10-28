@@ -84,6 +84,16 @@ contract Treasury is Ownable {
         emit ETHTransferred(recipient, amount);
     }
 
+    /**
+     * @notice Transfers ERC-20 tokens held by the Treasury to the specified recipient.
+     * @dev Callable only by the configured Timelock owner. Rejects zero token or recipient
+     *      addresses, a zero amount, and an amount exceeding the Treasury's token balance.
+     *      Uses SafeERC20 for the transfer. The recipient may receive less than the requested
+     *      amount if the token charges a transfer fee.
+     * @param token The address of the ERC-20 token to transfer.
+     * @param recipient The address receiving the tokens.
+     * @param amount The requested transfer amount, expressed in the token's base units.
+     */
     function transferERC20(address token, address recipient, uint256 amount) external onlyOwner {
         if (token == address(0)) revert Treasury__InvalidTokenAddress();
 

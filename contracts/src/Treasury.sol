@@ -43,6 +43,9 @@ contract Treasury is Ownable {
      */
     constructor(address timelockAddress) Ownable(timelockAddress) {}
 
+    /**
+     * @notice Accepts ETH deposits sent without calldata from any address.
+     */
     receive() external payable {}
 
     ///////////////////////////

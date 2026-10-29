@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {stdError} from "forge-std/StdError.sol";
-import {console} from "forge-std/console.sol";
 import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";

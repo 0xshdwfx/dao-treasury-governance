@@ -18,7 +18,7 @@ contract Treasury is Ownable {
     /// Events //////
     /////////////////
 
-    event ETHTransferred(address indexed recipient, uint256 amount);
+    event EthTransferred(address indexed recipient, uint256 amount);
     event ERC20Transferred(address indexed token, address indexed recipient, uint256 requestedAmount);
 
     /////////////////
@@ -29,7 +29,7 @@ contract Treasury is Ownable {
     error Treasury__InvalidRecipient();
     error Treasury__InvalidTransferAmount();
     error Treasury__TransferAmountExceedsTreasuryBalance();
-    error Treasury__ETHTransferFailed();
+    error Treasury__EthTransferFailed();
     error Treasury__InvalidTokenAddress();
     error Treasury__TransferAmountExceedsTokenBalance();
 
@@ -71,7 +71,7 @@ contract Treasury is Ownable {
      * @param recipient The payable address receiving the ETH.
      * @param amount The amount of ETH to send, expressed in wei.
      */
-    function transferETH(address payable recipient, uint256 amount) external onlyOwner {
+    function transferEth(address payable recipient, uint256 amount) external onlyOwner {
         if (recipient == address(0)) revert Treasury__InvalidRecipient();
 
         if (amount == 0) revert Treasury__InvalidTransferAmount();
@@ -79,9 +79,9 @@ contract Treasury is Ownable {
         if (amount > address(this).balance) revert Treasury__TransferAmountExceedsTreasuryBalance();
 
         (bool success,) = recipient.call{value: amount}("");
-        if (!success) revert Treasury__ETHTransferFailed();
+        if (!success) revert Treasury__EthTransferFailed();
 
-        emit ETHTransferred(recipient, amount);
+        emit EthTransferred(recipient, amount);
     }
 
     /**

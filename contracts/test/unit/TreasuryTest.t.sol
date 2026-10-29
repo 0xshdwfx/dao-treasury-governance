@@ -14,4 +14,12 @@ contract TreasuryTest is Test {
     function setUp() public {
         treasury = new Treasury(timelockOwner);
     }
+
+    ///////////////////
+    /// Deployment ///
+    /////////////////
+
+    function test_OwnerMatchesConfiguredTimelock() public view {
+        assertEq(treasury.owner(), timelockOwner, "Treasury owner must equal Timelock address");
+    }
 }

@@ -42,4 +42,14 @@ contract TreasuryTest is Test {
 
         assertEq(treasury.owner(), timelockOwner, "treasury ownership should still equal timelock address");
     }
+
+    function test_TimelockOwnerCannotRenounceOwnership() public {
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__OwnershipChangeDisabled.selector);
+
+        treasury.renounceOwnership();
+
+        assertEq(treasury.owner(), timelockOwner, "treasury ownership should still equal timelock address");
+    }
 }

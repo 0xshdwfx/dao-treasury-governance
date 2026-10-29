@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {Treasury} from "../../src/Treasury.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -13,6 +14,9 @@ contract TreasuryTest is Test {
     address public recipient = makeAddr("recipient");
 
     uint256 public constant ETH_AMOUNT = 1e18;
+
+    // events
+    event EthTransferred(address indexed recipient, uint256 amount);
 
     function setUp() public {
         treasury = new Treasury(timelockOwner);
@@ -60,7 +64,7 @@ contract TreasuryTest is Test {
     /////////////////////
 
     function test_TreasuryAcceptsETHFromOrdinaryUser() public {
-        deal(user, 10 ether);
+        deal(user, ETH_AMOUNT);
 
         vm.prank(user);
 
@@ -68,5 +72,25 @@ contract TreasuryTest is Test {
         assertTrue(success, "ETH transfer to receive() should succeed");
 
         assertEq(address(treasury).balance, ETH_AMOUNT, "Treasury ETH balance should increase by deposited amount");
+    }
+
+    //////////////////////
+    /// ETH Transfers ///
+    ////////////////////
+
+    function test_TimelockOwnerCanTransferETH() public {
+        deal(address(treasury), ETH_AMOUNT);
+        uint256 userBalanceBefore = user.balance;
+
+        vm.expectEmit(true, false, false, true, address(treasury));
+        emit EthTransferred(user, ETH_AMOUNT);
+
+        vm.prank(timelockOwner);
+        treasury.transferEth(payable(user), ETH_AMOUNT);
+
+        assertEq(address(treasury).balance, 0, "Treasury balance should decrease by the transferred amount");
+        assertEq(
+            user.balance, userBalanceBefore + ETH_AMOUNT, "Recipient balance should increase by transferred amount"
+        );
     }
 }

@@ -21,11 +21,25 @@ contract TreasuryTest is Test {
     /////////////////
 
     function test_OwnerMatchesConfiguredTimelock() public view {
-        assertEq(treasury.owner(), timelockOwner, "Treasury owner must equal Timelock address");
+        assertEq(treasury.owner(), timelockOwner, "treasury owner must equal Timelock address");
     }
 
     function test_DeploymentRevertsWithZeroTimelockAddress() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0)));
         new Treasury(address(0));
+    }
+
+    ///////////////////////////////
+    /// Ownership Restrictions ///
+    /////////////////////////////
+
+    function test_TimelockOwnerCannotTransferOwnership() public {
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__OwnershipChangeDisabled.selector);
+
+        treasury.transferOwnership(user);
+
+        assertEq(treasury.owner(), timelockOwner, "treasury ownership should still equal timelock address");
     }
 }

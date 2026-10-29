@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+import {Test} from "forge-std/Test.sol";
+import {Treasury} from "../../src/Treasury.sol";
+
+contract TreasuryTest is Test {
+    Treasury public treasury;
+
+    address public timelockOwner = makeAddr("timelockOwner");
+    address public user = makeAddr("user");
+    address public recipient = makeAddr("recipient");
+
+    function setUp() public {
+        treasury = new Treasury(timelockOwner);
+    }
+}

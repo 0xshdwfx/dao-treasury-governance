@@ -12,6 +12,8 @@ contract TreasuryTest is Test {
     address public user = makeAddr("user");
     address public recipient = makeAddr("recipient");
 
+    uint256 public constant ETH_AMOUNT = 1e18;
+
     function setUp() public {
         treasury = new Treasury(timelockOwner);
     }
@@ -21,7 +23,7 @@ contract TreasuryTest is Test {
     /////////////////
 
     function test_OwnerMatchesConfiguredTimelock() public view {
-        assertEq(treasury.owner(), timelockOwner, "treasury owner must equal Timelock address");
+        assertEq(treasury.owner(), timelockOwner, "Treasury owner must equal Timelock address");
     }
 
     function test_DeploymentRevertsWithZeroTimelockAddress() public {
@@ -40,7 +42,7 @@ contract TreasuryTest is Test {
 
         treasury.transferOwnership(user);
 
-        assertEq(treasury.owner(), timelockOwner, "treasury ownership should still equal timelock address");
+        assertEq(treasury.owner(), timelockOwner, "Treasury ownership should still equal timelock address");
     }
 
     function test_TimelockOwnerCannotRenounceOwnership() public {
@@ -50,6 +52,21 @@ contract TreasuryTest is Test {
 
         treasury.renounceOwnership();
 
-        assertEq(treasury.owner(), timelockOwner, "treasury ownership should still equal timelock address");
+        assertEq(treasury.owner(), timelockOwner, "Treasury ownership should still equal timelock address");
+    }
+
+    ///////////////////////
+    /// Asset Deposits ///
+    /////////////////////
+
+    function test_TreasuryAcceptsETHFromOrdinaryUser() public {
+        deal(user, 10 ether);
+
+        vm.prank(user);
+
+        (bool success,) = address(treasury).call{value: ETH_AMOUNT}("");
+        assertTrue(success, "ETH transfer to receive() should succeed");
+
+        assertEq(address(treasury).balance, ETH_AMOUNT, "Treasury ETH balance should increase by deposited amount");
     }
 }

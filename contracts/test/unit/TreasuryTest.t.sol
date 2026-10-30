@@ -26,11 +26,11 @@ contract TreasuryTest is Test {
     /// Deployment ///
     /////////////////
 
-    function test_OwnerMatchesConfiguredTimelock() public view {
+    function test_DeployTreasury_AssignsOwnershipToConfiguredTimelock() public view {
         assertEq(treasury.owner(), timelockOwner, "Treasury owner must equal Timelock address");
     }
 
-    function test_DeploymentRevertsWithZeroTimelockAddress() public {
+    function test_DeployTreasury_Reverts_WhenTimelockAddressIsZero() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0)));
         new Treasury(address(0));
     }
@@ -39,7 +39,7 @@ contract TreasuryTest is Test {
     /// Ownership Restrictions ///
     /////////////////////////////
 
-    function test_TimelockOwnerCannotTransferOwnership() public {
+    function test_TransferOwnership_Reverts_WhenCalledByTimelockOwner() public {
         vm.prank(timelockOwner);
 
         vm.expectRevert(Treasury.Treasury__OwnershipChangeDisabled.selector);
@@ -49,7 +49,7 @@ contract TreasuryTest is Test {
         assertEq(treasury.owner(), timelockOwner, "Treasury ownership should still equal timelock address");
     }
 
-    function test_TimelockOwnerCannotRenounceOwnership() public {
+    function test_RenounceOwnership_Reverts_WhenCalledByTimelockOwner() public {
         vm.prank(timelockOwner);
 
         vm.expectRevert(Treasury.Treasury__OwnershipChangeDisabled.selector);
@@ -63,7 +63,7 @@ contract TreasuryTest is Test {
     /// Asset Deposits ///
     /////////////////////
 
-    function test_TreasuryAcceptsETHFromOrdinaryUser() public {
+    function test_DepositTreasuryETH_IncreasesTreasuryBalance_WhenSentByOrdinaryUser() public {
         deal(user, ETH_AMOUNT);
 
         vm.prank(user);
@@ -78,8 +78,9 @@ contract TreasuryTest is Test {
     /// ETH Transfers ///
     ////////////////////
 
-    function test_TimelockOwnerCanTransferETH() public {
+    function test_WithdrawTreasuryETH_TransfersRequestedAmount_WhenCalledByTimelockOwner() public {
         deal(address(treasury), ETH_AMOUNT);
+
         uint256 userBalanceBefore = user.balance;
 
         vm.expectEmit(true, false, false, true, address(treasury));

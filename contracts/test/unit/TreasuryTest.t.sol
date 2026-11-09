@@ -139,4 +139,20 @@ contract TreasuryTest is Test {
 
         assertEq(user.balance, userBalanceBefore, "Recipient balance should remain unchanged");
     }
+
+    function test_WithdrawTreasuryETH_Reverts_WhenAmountExceedsTreasuryBalance() public {
+        deal(address(treasury), ETH_AMOUNT);
+        uint256 treasuryBalanceBefore = address(treasury).balance;
+        uint256 userBalanceBefore = user.balance;
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__TransferAmountExceedsTreasuryBalance.selector);
+
+        treasury.transferEth(payable(user), ETH_AMOUNT + 1);
+
+        assertEq(address(treasury).balance, treasuryBalanceBefore, "Treasury balance should remain unchanged");
+
+        assertEq(user.balance, userBalanceBefore, "Recipient balance should remain unchanged");
+    }
 }

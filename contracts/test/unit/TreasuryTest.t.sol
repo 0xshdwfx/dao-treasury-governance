@@ -178,4 +178,28 @@ contract TreasuryTest is Test {
             "Recipient balance should remain unchanged"
         );
     }
+
+    function test_WithdrawTreasuryETH_PreservesRemainingBalance_WhenWithdrawingPartOfTreasuryFunds() public {
+        deal(address(treasury), ETH_AMOUNT);
+        uint256 treasuryBalanceBefore = address(treasury).balance;
+        uint256 userBalanceBefore = user.balance;
+
+        uint256 partialTransferAmount = ETH_AMOUNT / 2;
+
+        vm.prank(timelockOwner);
+
+        treasury.transferEth(payable(user), partialTransferAmount);
+
+        assertEq(
+            user.balance,
+            userBalanceBefore + partialTransferAmount,
+            "Recipient balance should increase by exactly the requested partial amount"
+        );
+
+        assertEq(
+            address(treasury).balance,
+            treasuryBalanceBefore - partialTransferAmount,
+            "Treasury balance should decrease by exactly the requested partial amount"
+        );
+    }
 }

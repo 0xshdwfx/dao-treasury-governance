@@ -6,14 +6,17 @@ import {console} from "forge-std/console.sol";
 import {Treasury} from "../../src/Treasury.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {RejectingETHRecipient} from "../mocks/RejectingETHRecipient.sol";
+import {ShadowToken} from "../../src/ShadowToken.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
     RejectingETHRecipient public rejectingETHRecipient;
+    ShadowToken public shadowToken;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
     address public recipient = makeAddr("recipient");
+    address public tokenDeployer = makeAddr("tokenDeployer");
 
     uint256 public constant ETH_AMOUNT = 1e18;
 
@@ -23,6 +26,9 @@ contract TreasuryTest is Test {
     function setUp() public {
         treasury = new Treasury(timelockOwner);
         rejectingETHRecipient = new RejectingETHRecipient();
+
+        vm.prank(tokenDeployer);
+        shadowToken = new ShadowToken();
     }
 
     ///////////////////

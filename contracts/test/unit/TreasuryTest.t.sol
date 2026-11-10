@@ -5,9 +5,11 @@ import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {Treasury} from "../../src/Treasury.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {RejectingETHRecipient} from "../mocks/RejectingETHRecipient.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
+    RejectingETHRecipient public rejectingETHRecipient;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
@@ -20,6 +22,7 @@ contract TreasuryTest is Test {
 
     function setUp() public {
         treasury = new Treasury(timelockOwner);
+        rejectingETHRecipient = new RejectingETHRecipient();
     }
 
     ///////////////////
@@ -154,5 +157,25 @@ contract TreasuryTest is Test {
         assertEq(address(treasury).balance, treasuryBalanceBefore, "Treasury balance should remain unchanged");
 
         assertEq(user.balance, userBalanceBefore, "Recipient balance should remain unchanged");
+    }
+
+    function test_WithdrawTreasuryETH_Reverts_WhenRecipientRejectsETH() public {
+        deal(address(treasury), ETH_AMOUNT);
+        uint256 treasuryBalanceBefore = address(treasury).balance;
+        uint256 rejectingETHRecipientBalanceBefore = address(rejectingETHRecipient).balance;
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__EthTransferFailed.selector);
+
+        treasury.transferEth(payable(address(rejectingETHRecipient)), ETH_AMOUNT);
+
+        assertEq(address(treasury).balance, treasuryBalanceBefore, "Treasury balance should remain unchanged");
+
+        assertEq(
+            address(rejectingETHRecipient).balance,
+            rejectingETHRecipientBalanceBefore,
+            "Recipient balance should remain unchanged"
+        );
     }
 }

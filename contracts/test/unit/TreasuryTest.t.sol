@@ -7,11 +7,14 @@ import {Treasury} from "../../src/Treasury.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {RejectingETHRecipient} from "../mocks/RejectingETHRecipient.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
+import {FalseReturnERC20} from "../mocks/FalseReturnERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
     RejectingETHRecipient public rejectingETHRecipient;
     ShadowToken public shadowToken;
+    FalseReturnERC20 public falseReturnERC20;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
@@ -28,6 +31,7 @@ contract TreasuryTest is Test {
     function setUp() public {
         treasury = new Treasury(timelockOwner);
         rejectingETHRecipient = new RejectingETHRecipient();
+        falseReturnERC20 = new FalseReturnERC20();
 
         vm.prank(tokenDeployer);
         shadowToken = new ShadowToken();
@@ -353,6 +357,29 @@ contract TreasuryTest is Test {
 
         uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
         uint256 userBalanceAfter = shadowToken.balanceOf(user);
+
+        assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
+
+        assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
+    }
+
+    /////////////////////////////////
+    /// ERC-20 Transfer Failures ///
+    ///////////////////////////////
+
+    function test_WithdrawTreasuryERC20_Reverts_WhenTokenTransferReturnsFalse() public {
+        deal(address(falseReturnERC20), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = falseReturnERC20.balanceOf(address(treasury));
+        uint256 userBalanceBefore = falseReturnERC20.balanceOf(user);
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(falseReturnERC20)));
+
+        treasury.transferERC20(address(falseReturnERC20), user, TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceAfter = falseReturnERC20.balanceOf(address(treasury));
+        uint256 userBalanceAfter = falseReturnERC20.balanceOf(user);
 
         assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
 

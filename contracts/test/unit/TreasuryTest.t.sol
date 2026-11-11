@@ -320,4 +320,23 @@ contract TreasuryTest is Test {
 
         assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
     }
+
+    function test_WithdrawTreasuryERC20_Reverts_WhenAmountIsZero() public {
+        deal(address(shadowToken), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceBefore = shadowToken.balanceOf(user);
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__InvalidTransferAmount.selector);
+
+        treasury.transferERC20(address(shadowToken), user, 0);
+
+        uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceAfter = shadowToken.balanceOf(user);
+
+        assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
+
+        assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
+    }
 }

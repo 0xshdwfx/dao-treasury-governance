@@ -23,6 +23,7 @@ contract TreasuryTest is Test {
 
     // events
     event EthTransferred(address indexed recipient, uint256 amount);
+    event ERC20Transferred(address indexed token, address indexed recipient, uint256 requestedAmount);
 
     function setUp() public {
         treasury = new Treasury(timelockOwner);
@@ -232,6 +233,38 @@ contract TreasuryTest is Test {
             address(treasury).balance,
             treasuryBalanceBefore - partialTransferAmount,
             "Treasury balance should decrease by exactly the requested partial amount"
+        );
+    }
+
+    /////////////////////////
+    /// ERC-20 Transfers ///
+    ///////////////////////
+
+    function test_WithdrawTreasuryERC20_TransfersRequestedAmount_WhenCalledByTimelockOwner() public {
+        deal(address(shadowToken), address(treasury), TRANSFER_AMOUNT);
+        uint256 userBalanceBefore = shadowToken.balanceOf(user);
+        uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
+
+        vm.expectEmit(true, true, false, true, address(treasury));
+        emit ERC20Transferred(address(shadowToken), user, TRANSFER_AMOUNT);
+
+        vm.prank(timelockOwner);
+
+        treasury.transferERC20(address(shadowToken), user, TRANSFER_AMOUNT);
+
+        uint256 userBalanceAfter = shadowToken.balanceOf(user);
+        uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
+
+        assertEq(
+            userBalanceAfter,
+            userBalanceBefore + TRANSFER_AMOUNT,
+            "Recipient balance should increase by transferred amount"
+        );
+
+        assertEq(
+            treasuryBalanceAfter,
+            treasuryBalanceBefore - TRANSFER_AMOUNT,
+            "Treasury balance should decrease by the transferred amount"
         );
     }
 }

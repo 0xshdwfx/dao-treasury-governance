@@ -19,6 +19,7 @@ contract TreasuryTest is Test {
     address public tokenDeployer = makeAddr("tokenDeployer");
 
     uint256 public constant ETH_AMOUNT = 1e18;
+    uint256 public constant TRANSFER_AMOUNT = 100e18;
 
     // events
     event EthTransferred(address indexed recipient, uint256 amount);
@@ -81,6 +82,31 @@ contract TreasuryTest is Test {
         assertTrue(success, "ETH transfer to receive() should succeed");
 
         assertEq(address(treasury).balance, ETH_AMOUNT, "Treasury ETH balance should increase by deposited amount");
+    }
+
+    function test_DepositTreasuryERC20_IncreasesTreasuryTokenBalance_WhenSentByTokenHolder() public {
+        uint256 tokenDeployerBalanceBefore = shadowToken.balanceOf(tokenDeployer);
+        uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
+
+        vm.prank(tokenDeployer);
+
+        bool success = shadowToken.transfer(address(treasury), TRANSFER_AMOUNT);
+        assertTrue(success, "Token transfer to treasury should succeed");
+
+        uint256 tokenDeployerBalanceAfter = shadowToken.balanceOf(tokenDeployer);
+        uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
+
+        assertEq(
+            tokenDeployerBalanceAfter,
+            tokenDeployerBalanceBefore - TRANSFER_AMOUNT,
+            "Token deployer balance should decrease by transfer amount"
+        );
+
+        assertEq(
+            treasuryBalanceAfter,
+            treasuryBalanceBefore + TRANSFER_AMOUNT,
+            "Treasury token balance should increase by the transfer amount"
+        );
     }
 
     //////////////////////

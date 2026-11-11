@@ -242,8 +242,8 @@ contract TreasuryTest is Test {
 
     function test_WithdrawTreasuryERC20_TransfersRequestedAmount_WhenCalledByTimelockOwner() public {
         deal(address(shadowToken), address(treasury), TRANSFER_AMOUNT);
-        uint256 userBalanceBefore = shadowToken.balanceOf(user);
         uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceBefore = shadowToken.balanceOf(user);
 
         vm.expectEmit(true, true, false, true, address(treasury));
         emit ERC20Transferred(address(shadowToken), user, TRANSFER_AMOUNT);
@@ -252,19 +252,38 @@ contract TreasuryTest is Test {
 
         treasury.transferERC20(address(shadowToken), user, TRANSFER_AMOUNT);
 
-        uint256 userBalanceAfter = shadowToken.balanceOf(user);
         uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
-
-        assertEq(
-            userBalanceAfter,
-            userBalanceBefore + TRANSFER_AMOUNT,
-            "Recipient balance should increase by transferred amount"
-        );
+        uint256 userBalanceAfter = shadowToken.balanceOf(user);
 
         assertEq(
             treasuryBalanceAfter,
             treasuryBalanceBefore - TRANSFER_AMOUNT,
             "Treasury balance should decrease by the transferred amount"
         );
+
+        assertEq(
+            userBalanceAfter,
+            userBalanceBefore + TRANSFER_AMOUNT,
+            "Recipient balance should increase by transferred amount"
+        );
+    }
+
+    function test_WithdrawTreasuryERC20_Reverts_WhenCalledByOrdinaryUser() public {
+        deal(address(shadowToken), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceBefore = shadowToken.balanceOf(user);
+
+        vm.prank(user);
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
+
+        treasury.transferERC20(address(shadowToken), user, TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceAfter = shadowToken.balanceOf(user);
+
+        assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
+
+        assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
     }
 }

@@ -409,6 +409,37 @@ contract TreasuryTest is Test {
         );
     }
 
+    function test_WithdrawTreasuryERC20_PreservesRemainingTokenBalance_WhenWithdrawingPartOfTreasuryFunds() public {
+        deal(address(shadowToken), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceBefore = shadowToken.balanceOf(user);
+
+        uint256 remainingAmount = 20e18;
+        uint256 withdrawalAmount = TRANSFER_AMOUNT - remainingAmount;
+
+        vm.expectEmit(true, true, false, true, address(treasury));
+        emit ERC20Transferred(address(shadowToken), user, withdrawalAmount);
+
+        vm.prank(timelockOwner);
+
+        treasury.transferERC20(address(shadowToken), user, withdrawalAmount);
+
+        uint256 treasuryBalanceAfter = shadowToken.balanceOf(address(treasury));
+        uint256 userBalanceAfter = shadowToken.balanceOf(user);
+
+        assertEq(
+            treasuryBalanceAfter,
+            treasuryBalanceBefore - withdrawalAmount,
+            "Treasury balance should decrease by the transfer amount minus the partial withdrawal amount"
+        );
+
+        assertEq(
+            userBalanceAfter,
+            userBalanceBefore + withdrawalAmount,
+            "User balance should increase by the transfer amount minus the partial withdrawal amount"
+        );
+    }
+
     /////////////////////////////////
     /// ERC-20 Transfer Failures ///
     ///////////////////////////////

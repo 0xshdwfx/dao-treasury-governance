@@ -9,12 +9,14 @@ import {RejectingETHRecipient} from "../mocks/RejectingETHRecipient.sol";
 import {ShadowToken} from "../../src/ShadowToken.sol";
 import {FalseReturnERC20} from "../mocks/FalseReturnERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {NoReturnERC20} from "../mocks/NoReturnERC20.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
-    RejectingETHRecipient public rejectingETHRecipient;
+    RejectingETHRecipient public rejectingEthRecipient;
     ShadowToken public shadowToken;
     FalseReturnERC20 public falseReturnERC20;
+    NoReturnERC20 public noReturnERC20;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
@@ -30,8 +32,9 @@ contract TreasuryTest is Test {
 
     function setUp() public {
         treasury = new Treasury(timelockOwner);
-        rejectingETHRecipient = new RejectingETHRecipient();
+        rejectingEthRecipient = new RejectingETHRecipient();
         falseReturnERC20 = new FalseReturnERC20();
+        noReturnERC20 = new NoReturnERC20();
 
         vm.prank(tokenDeployer);
         shadowToken = new ShadowToken();
@@ -199,19 +202,19 @@ contract TreasuryTest is Test {
     function test_WithdrawTreasuryETH_Reverts_WhenRecipientRejectsETH() public {
         deal(address(treasury), ETH_AMOUNT);
         uint256 treasuryBalanceBefore = address(treasury).balance;
-        uint256 rejectingETHRecipientBalanceBefore = address(rejectingETHRecipient).balance;
+        uint256 rejectingEthRecipientBalanceBefore = address(rejectingEthRecipient).balance;
 
         vm.prank(timelockOwner);
 
         vm.expectRevert(Treasury.Treasury__EthTransferFailed.selector);
 
-        treasury.transferEth(payable(address(rejectingETHRecipient)), ETH_AMOUNT);
+        treasury.transferEth(payable(address(rejectingEthRecipient)), ETH_AMOUNT);
 
         assertEq(address(treasury).balance, treasuryBalanceBefore, "Treasury balance should remain unchanged");
 
         assertEq(
-            address(rejectingETHRecipient).balance,
-            rejectingETHRecipientBalanceBefore,
+            address(rejectingEthRecipient).balance,
+            rejectingEthRecipientBalanceBefore,
             "Recipient balance should remain unchanged"
         );
     }
@@ -384,5 +387,35 @@ contract TreasuryTest is Test {
         assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
 
         assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
+    }
+
+    ////////////////////////////
+    /// ERC-20 Compatibility ///
+    ///////////////////////////
+
+    function test_WithdrawTreasuryERC20_TransfersRequestedAmount_WhenTokenReturnsNoData() public {
+        deal(address(noReturnERC20), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = noReturnERC20.balanceOf(address(treasury));
+        uint256 userBalanceBefore = noReturnERC20.balanceOf(user);
+
+        vm.expectEmit(true, true, false, true, address(treasury));
+        emit ERC20Transferred(address(noReturnERC20), user, TRANSFER_AMOUNT);
+
+        vm.prank(timelockOwner);
+
+        treasury.transferERC20(address(noReturnERC20), user, TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceAfter = noReturnERC20.balanceOf(address(treasury));
+        uint256 userBalanceAfter = noReturnERC20.balanceOf(user);
+
+        assertEq(
+            treasuryBalanceAfter,
+            treasuryBalanceBefore - TRANSFER_AMOUNT,
+            "Treasury balance should decrease by transfer amount"
+        );
+
+        assertEq(
+            userBalanceAfter, userBalanceBefore + TRANSFER_AMOUNT, "User balance should increase by transfer amount"
+        );
     }
 }

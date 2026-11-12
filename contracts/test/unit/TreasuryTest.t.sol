@@ -10,6 +10,7 @@ import {ShadowToken} from "../../src/ShadowToken.sol";
 import {FalseReturnERC20} from "../mocks/FalseReturnERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {NoReturnERC20} from "../mocks/NoReturnERC20.sol";
+import {FeeOnTransferERC20} from "../mocks/FeeOnTransferERC20.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
@@ -17,11 +18,13 @@ contract TreasuryTest is Test {
     ShadowToken public shadowToken;
     FalseReturnERC20 public falseReturnERC20;
     NoReturnERC20 public noReturnERC20;
+    FeeOnTransferERC20 public feeOnTransferERC20;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
     address public recipient = makeAddr("recipient");
     address public tokenDeployer = makeAddr("tokenDeployer");
+    address public feeCollector = makeAddr("feeCollector");
 
     uint256 public constant ETH_AMOUNT = 1e18;
     uint256 public constant TRANSFER_AMOUNT = 100e18;
@@ -35,6 +38,7 @@ contract TreasuryTest is Test {
         rejectingEthRecipient = new RejectingETHRecipient();
         falseReturnERC20 = new FalseReturnERC20();
         noReturnERC20 = new NoReturnERC20();
+        feeOnTransferERC20 = new FeeOnTransferERC20(feeCollector);
 
         vm.prank(tokenDeployer);
         shadowToken = new ShadowToken();
@@ -364,6 +368,45 @@ contract TreasuryTest is Test {
         assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
 
         assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
+    }
+
+    function test_WithdrawTreasuryERC20_TransfersNetAmountToRecipient_WhenTokenChargesTransferFee() public {
+        deal(address(feeOnTransferERC20), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = feeOnTransferERC20.balanceOf(address(treasury));
+        uint256 userBalanceBefore = feeOnTransferERC20.balanceOf(user);
+        uint256 feeCollectorBalanceBefore = feeOnTransferERC20.balanceOf(feeCollector);
+
+        vm.expectEmit(true, true, false, true, address(treasury));
+        emit ERC20Transferred(address(feeOnTransferERC20), user, TRANSFER_AMOUNT);
+
+        vm.prank(timelockOwner);
+
+        treasury.transferERC20(address(feeOnTransferERC20), user, TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceAfter = feeOnTransferERC20.balanceOf(address(treasury));
+        uint256 userBalanceAfter = feeOnTransferERC20.balanceOf(user);
+        uint256 feeCollectorBalanceAfter = feeOnTransferERC20.balanceOf(feeCollector);
+
+        uint256 fee = (TRANSFER_AMOUNT * 100) / 10_000;
+        uint256 netAmount = TRANSFER_AMOUNT - fee;
+
+        assertEq(
+            treasuryBalanceAfter,
+            treasuryBalanceBefore - TRANSFER_AMOUNT,
+            "Treasury balance should decrease by transfer amount"
+        );
+
+        assertEq(
+            userBalanceAfter,
+            userBalanceBefore + netAmount,
+            "User balance should increase by the transfer amount minus the 1% fee"
+        );
+
+        assertEq(
+            feeCollectorBalanceAfter,
+            feeCollectorBalanceBefore + fee,
+            "Fee collectors balance should increase by the fee amount"
+        );
     }
 
     /////////////////////////////////

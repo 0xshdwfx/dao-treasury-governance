@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
 import {Treasury} from "../../src/Treasury.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {RejectingETHRecipient} from "../mocks/RejectingETHRecipient.sol";
@@ -12,6 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {NoReturnERC20} from "../mocks/NoReturnERC20.sol";
 import {FeeOnTransferERC20} from "../mocks/FeeOnTransferERC20.sol";
 import {AcceptingETHRecipient} from "../mocks/AcceptingETHRecipient.sol";
+import {RevertingERC20} from "../mocks/RevertingERC20.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
@@ -21,6 +21,7 @@ contract TreasuryTest is Test {
     NoReturnERC20 public noReturnERC20;
     FeeOnTransferERC20 public feeOnTransferERC20;
     AcceptingETHRecipient public acceptingETHRecipient;
+    RevertingERC20 public revertingERC20;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
@@ -41,6 +42,7 @@ contract TreasuryTest is Test {
         noReturnERC20 = new NoReturnERC20();
         feeOnTransferERC20 = new FeeOnTransferERC20(feeCollector);
         acceptingETHRecipient = new AcceptingETHRecipient();
+        revertingERC20 = new RevertingERC20();
 
         vm.prank(tokenDeployer);
         shadowToken = new ShadowToken();
@@ -440,6 +442,26 @@ contract TreasuryTest is Test {
 
         uint256 treasuryBalanceAfter = falseReturnERC20.balanceOf(address(treasury));
         uint256 userBalanceAfter = falseReturnERC20.balanceOf(user);
+
+        assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
+
+        assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
+    }
+
+    function test_WithdrawTreasuryERC20_PropagatesTokenError_WhenTokenTransferReverts() public {
+        deal(address(revertingERC20), address(treasury), TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceBefore = revertingERC20.balanceOf(address(treasury));
+        uint256 userBalanceBefore = revertingERC20.balanceOf(user);
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(RevertingERC20.TransferInvalid.selector);
+
+        treasury.transferERC20(address(revertingERC20), user, TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceAfter = revertingERC20.balanceOf(address(treasury));
+        uint256 userBalanceAfter = revertingERC20.balanceOf(user);
 
         assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain unchanged");
 

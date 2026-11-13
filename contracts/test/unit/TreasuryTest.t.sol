@@ -11,6 +11,7 @@ import {FalseReturnERC20} from "../mocks/FalseReturnERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {NoReturnERC20} from "../mocks/NoReturnERC20.sol";
 import {FeeOnTransferERC20} from "../mocks/FeeOnTransferERC20.sol";
+import {AcceptingETHRecipient} from "../mocks/AcceptingETHRecipient.sol";
 
 contract TreasuryTest is Test {
     Treasury public treasury;
@@ -19,10 +20,10 @@ contract TreasuryTest is Test {
     FalseReturnERC20 public falseReturnERC20;
     NoReturnERC20 public noReturnERC20;
     FeeOnTransferERC20 public feeOnTransferERC20;
+    AcceptingETHRecipient public acceptingETHRecipient;
 
     address public timelockOwner = makeAddr("timelockOwner");
     address public user = makeAddr("user");
-    address public recipient = makeAddr("recipient");
     address public tokenDeployer = makeAddr("tokenDeployer");
     address public feeCollector = makeAddr("feeCollector");
 
@@ -39,6 +40,7 @@ contract TreasuryTest is Test {
         falseReturnERC20 = new FalseReturnERC20();
         noReturnERC20 = new NoReturnERC20();
         feeOnTransferERC20 = new FeeOnTransferERC20(feeCollector);
+        acceptingETHRecipient = new AcceptingETHRecipient();
 
         vm.prank(tokenDeployer);
         shadowToken = new ShadowToken();
@@ -247,6 +249,26 @@ contract TreasuryTest is Test {
         );
     }
 
+    function test_WithdrawTreasuryETH_TransfersRequestedAmount_WhenRecipientIsPayableContract() public {
+        deal(address(treasury), ETH_AMOUNT);
+
+        uint256 acceptingETHRecipientContractBalanceBefore = address(acceptingETHRecipient).balance;
+
+        vm.expectEmit(true, false, false, true, address(treasury));
+        emit EthTransferred(address(acceptingETHRecipient), ETH_AMOUNT);
+
+        vm.prank(timelockOwner);
+        treasury.transferEth(payable(acceptingETHRecipient), ETH_AMOUNT);
+
+        assertEq(address(treasury).balance, 0, "Treasury balance should decrease by the transferred amount");
+
+        assertEq(
+            address(acceptingETHRecipient).balance,
+            acceptingETHRecipientContractBalanceBefore + ETH_AMOUNT,
+            "Recipient balance should increase by transferred amount"
+        );
+    }
+
     /////////////////////////
     /// ERC-20 Transfers ///
     ///////////////////////
@@ -370,45 +392,6 @@ contract TreasuryTest is Test {
         assertEq(userBalanceAfter, userBalanceBefore, "User balance should remain unchanged");
     }
 
-    function test_WithdrawTreasuryERC20_TransfersNetAmountToRecipient_WhenTokenChargesTransferFee() public {
-        deal(address(feeOnTransferERC20), address(treasury), TRANSFER_AMOUNT);
-        uint256 treasuryBalanceBefore = feeOnTransferERC20.balanceOf(address(treasury));
-        uint256 userBalanceBefore = feeOnTransferERC20.balanceOf(user);
-        uint256 feeCollectorBalanceBefore = feeOnTransferERC20.balanceOf(feeCollector);
-
-        vm.expectEmit(true, true, false, true, address(treasury));
-        emit ERC20Transferred(address(feeOnTransferERC20), user, TRANSFER_AMOUNT);
-
-        vm.prank(timelockOwner);
-
-        treasury.transferERC20(address(feeOnTransferERC20), user, TRANSFER_AMOUNT);
-
-        uint256 treasuryBalanceAfter = feeOnTransferERC20.balanceOf(address(treasury));
-        uint256 userBalanceAfter = feeOnTransferERC20.balanceOf(user);
-        uint256 feeCollectorBalanceAfter = feeOnTransferERC20.balanceOf(feeCollector);
-
-        uint256 fee = (TRANSFER_AMOUNT * 100) / 10_000;
-        uint256 netAmount = TRANSFER_AMOUNT - fee;
-
-        assertEq(
-            treasuryBalanceAfter,
-            treasuryBalanceBefore - TRANSFER_AMOUNT,
-            "Treasury balance should decrease by transfer amount"
-        );
-
-        assertEq(
-            userBalanceAfter,
-            userBalanceBefore + netAmount,
-            "User balance should increase by the transfer amount minus the 1% fee"
-        );
-
-        assertEq(
-            feeCollectorBalanceAfter,
-            feeCollectorBalanceBefore + fee,
-            "Fee collectors balance should increase by the fee amount"
-        );
-    }
-
     function test_WithdrawTreasuryERC20_PreservesRemainingTokenBalance_WhenWithdrawingPartOfTreasuryFunds() public {
         deal(address(shadowToken), address(treasury), TRANSFER_AMOUNT);
         uint256 treasuryBalanceBefore = shadowToken.balanceOf(address(treasury));
@@ -430,13 +413,13 @@ contract TreasuryTest is Test {
         assertEq(
             treasuryBalanceAfter,
             treasuryBalanceBefore - withdrawalAmount,
-            "Treasury balance should decrease by the transfer amount minus the partial withdrawal amount"
+            "Treasury balance should decrease by the withdrawal amount"
         );
 
         assertEq(
             userBalanceAfter,
             userBalanceBefore + withdrawalAmount,
-            "User balance should increase by the transfer amount minus the partial withdrawal amount"
+            "User balance should increase by the withdrawal amount"
         );
     }
 
@@ -490,6 +473,45 @@ contract TreasuryTest is Test {
 
         assertEq(
             userBalanceAfter, userBalanceBefore + TRANSFER_AMOUNT, "User balance should increase by transfer amount"
+        );
+    }
+
+    function test_WithdrawTreasuryERC20_TransfersNetAmountToRecipient_WhenTokenChargesTransferFee() public {
+        deal(address(feeOnTransferERC20), address(treasury), TRANSFER_AMOUNT);
+        uint256 treasuryBalanceBefore = feeOnTransferERC20.balanceOf(address(treasury));
+        uint256 userBalanceBefore = feeOnTransferERC20.balanceOf(user);
+        uint256 feeCollectorBalanceBefore = feeOnTransferERC20.balanceOf(feeCollector);
+
+        vm.expectEmit(true, true, false, true, address(treasury));
+        emit ERC20Transferred(address(feeOnTransferERC20), user, TRANSFER_AMOUNT);
+
+        vm.prank(timelockOwner);
+
+        treasury.transferERC20(address(feeOnTransferERC20), user, TRANSFER_AMOUNT);
+
+        uint256 treasuryBalanceAfter = feeOnTransferERC20.balanceOf(address(treasury));
+        uint256 userBalanceAfter = feeOnTransferERC20.balanceOf(user);
+        uint256 feeCollectorBalanceAfter = feeOnTransferERC20.balanceOf(feeCollector);
+
+        uint256 fee = (TRANSFER_AMOUNT * 100) / 10_000;
+        uint256 netAmount = TRANSFER_AMOUNT - fee;
+
+        assertEq(
+            treasuryBalanceAfter,
+            treasuryBalanceBefore - TRANSFER_AMOUNT,
+            "Treasury balance should decrease by transfer amount"
+        );
+
+        assertEq(
+            userBalanceAfter,
+            userBalanceBefore + netAmount,
+            "User balance should increase by the transfer amount minus the 1% fee"
+        );
+
+        assertEq(
+            feeCollectorBalanceAfter,
+            feeCollectorBalanceBefore + fee,
+            "Fee collectors balance should increase by the fee amount"
         );
     }
 }

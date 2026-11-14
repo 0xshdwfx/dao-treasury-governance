@@ -152,7 +152,7 @@ contract ShadowTokenTest is Test {
         vm.startPrank(deployer);
         shadowToken.delegate(deployer);
 
-        uint256 blockNumber = block.number;
+        uint256 snapshotTimepoint = shadowToken.clock();
 
         assertEq(shadowToken.getVotes(deployer), INITIAL_SUPPLY, "deployer voting power should equal INITIAL_SUPPLY");
 
@@ -167,12 +167,12 @@ contract ShadowTokenTest is Test {
             "deployer's current voting power should decrease by TRANSFER_AMOUNT after transfer"
         );
 
-        uint256 deployerVotingPowerAtEarlierBlock = shadowToken.getPastVotes(deployer, blockNumber);
+        uint256 deployerVotingPowerAtSnapshot = shadowToken.getPastVotes(deployer, snapshotTimepoint);
 
         vm.stopPrank();
 
         assertEq(
-            deployerVotingPowerAtEarlierBlock,
+            deployerVotingPowerAtSnapshot,
             INITIAL_SUPPLY,
             "deployer historical voting power should equal INITIAL_SUPPLY"
         );

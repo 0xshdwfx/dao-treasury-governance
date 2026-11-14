@@ -23,17 +23,17 @@ contract ShadowTokenTest is Test {
     /// Token Configuration ///
     //////////////////////////
 
-    function test_TokenMetadataMatchesSpecification() public view {
+    function test_ReadTokenMetadata_ReturnsConfiguredNameAndSymbol() public view {
         assertEq(shadowToken.name(), "Shadow", "token name should be Shadow");
         assertEq(shadowToken.symbol(), "SHDW", "token symbol should be SHDW");
     }
 
-    function test_InitialSupplyIsFullyAllocatedToDeployer() public view {
+    function test_DeployToken_AllocatesEntireInitialSupplyToDeployer() public view {
         assertEq(shadowToken.totalSupply(), INITIAL_SUPPLY, "total supply should equal initial supply");
         assertEq(shadowToken.balanceOf(deployer), INITIAL_SUPPLY, "deployer should receive the initial supply");
     }
 
-    function test_TokenDecimalsAreEighteen() public view {
+    function test_ReadTokenDecimals_ReturnsEighteen() public view {
         assertEq(shadowToken.decimals(), TOKEN_DECIMALS, "token decimals should equal 18");
     }
 
@@ -41,7 +41,7 @@ contract ShadowTokenTest is Test {
     /// ERC20Permit ///
     ///////////////////
 
-    function test_PermitNonceStartsAtZeroForDeployer() public view {
+    function test_ReadPermitNonce_ReturnsZero_WhenDeployerHasNotUsedPermit() public view {
         assertEq(shadowToken.nonces(deployer), 0, "deployer permit nonce should start at zero");
     }
 
@@ -49,7 +49,7 @@ contract ShadowTokenTest is Test {
     /// ERC20 Transfers ///
     //////////////////////
 
-    function test_TokenTransferDecreasesDeployerBalanceAndIncreasesRecipientBalance() public {
+    function test_TransferTokens_UpdatesSenderAndRecipientBalances_WhenSenderHasSufficientTokens() public {
         vm.startPrank(deployer);
 
         uint256 recipientBalanceBeforeTransfer = shadowToken.balanceOf(recipient);
@@ -79,7 +79,7 @@ contract ShadowTokenTest is Test {
     /// ERC20Votes ///
     /////////////////
 
-    function test_SelfDelegationAssignsVotingPower() public {
+    function test_DelegateVotes_AssignsEntireTokenBalanceAsVotingPower_WhenDeployerSelfDelegates() public {
         vm.prank(deployer);
 
         shadowToken.delegate(deployer);
@@ -87,7 +87,9 @@ contract ShadowTokenTest is Test {
         assertEq(shadowToken.getVotes(deployer), INITIAL_SUPPLY);
     }
 
-    function test_DelegatedDeployerVotingPowerDecreasesWhenTokensAreTransferred() public {
+    function test_TransferTokens_DecreasesSenderVotesWithoutIncreasingRecipientVotes_WhenRecipientHasNotDelegated()
+        public
+    {
         vm.startPrank(deployer);
 
         shadowToken.delegate(deployer);
@@ -124,7 +126,7 @@ contract ShadowTokenTest is Test {
         assertEq(recipientVotingPowerAfterTransfer, 0, "recipient voting power should still be zero after transfer");
     }
 
-    function test_RecipientSelfDelegationAssignsTransferredTokenBalanceAsVotingPower() public {
+    function test_DelegateVotes_AssignsReceivedTokenBalanceAsVotingPower_WhenRecipientSelfDelegates() public {
         assertEq(shadowToken.getVotes(recipient), 0, "recipient voting power should start at zero");
 
         vm.prank(deployer);
@@ -146,7 +148,7 @@ contract ShadowTokenTest is Test {
         );
     }
 
-    function test_HistoricalDeployerVotingPowerRemainsUnchangedAfterTokenTransfer() public {
+    function test_ReadPastVotes_PreservesHistoricalDeployerVotingPower_WhenTokensAreTransferredAfterSnapshot() public {
         vm.startPrank(deployer);
         shadowToken.delegate(deployer);
 

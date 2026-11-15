@@ -1656,7 +1656,7 @@ contract ShadowGovernorTest is Test {
     /// Timelock Execution ///
     /////////////////////////
 
-    function test_QueuedProposalCannotExecuteBeforeTimelockDelay() public {
+    function test_ExecuteProposal_Reverts_WhenTimelockDelayHasNotElapsed() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1730,7 +1730,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_QueuedProposalCanExecuteAfterTimelockDelay() public {
+    function test_ExecuteProposal_SetsExecutedState_WhenTimelockDelayHasElapsed() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1801,7 +1801,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ExecutedProposalCannotExecuteAgain() public {
+    function test_ExecuteProposal_Reverts_WhenProposalWasAlreadyExecuted() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1885,7 +1885,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_QueuedProposalCanBeExecutedByAnyone() public {
+    function test_ExecuteProposal_AllowsOrdinaryUser_WhenQueuedProposalIsReady() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1958,7 +1958,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_SucceededProposalCannotExecuteWithoutQueueing() public {
+    function test_ExecuteProposal_Reverts_WhenSuccessfulProposalHasNotBeenQueued() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

@@ -2091,7 +2091,7 @@ contract ShadowGovernorTest is Test {
     /// Governance Settings ///
     //////////////////////////
 
-    function test_GovernanceCanChangeVotingDelayThroughTimelock() public {
+    function test_ChangeVotingDelay_UpdatesDelay_WhenApprovedProposalIsExecuted() public {
         uint48 newVotingDelay = 2 minutes;
 
         address[] memory targets = new address[](1);
@@ -2174,7 +2174,7 @@ contract ShadowGovernorTest is Test {
     /// Proposal Integrity ///
     /////////////////////////
 
-    function test_ProposalCannotExecuteWithAlteredCalldata() public {
+    function test_ExecuteProposal_Reverts_WhenApprovedCalldataIsChanged() public {
         uint48 newVotingDelay = 2 minutes;
 
         address[] memory targets = new address[](1);
@@ -2259,7 +2259,7 @@ contract ShadowGovernorTest is Test {
     /// Batch Execution ///
     //////////////////////
 
-    function test_FailedBatchActionRollsBackEarlierActions() public {
+    function test_ExecuteProposal_UndoesEarlierActions_WhenLaterBatchActionFails() public {
         uint48 newVotingDelay = 2 minutes;
         uint32 zeroPeriod = 0;
 

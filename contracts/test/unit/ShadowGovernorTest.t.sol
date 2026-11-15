@@ -680,7 +680,7 @@ contract ShadowGovernorTest is Test {
     /// Proposal Cancellation ///
     ////////////////////////////
 
-    function test_ProposerCanCancelPendingProposal() public {
+    function test_CancelProposal_SetsCanceledState_WhenProposerCancelsPendingProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -723,7 +723,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_NonProposerCannotCancelPendingProposal() public {
+    function test_CancelProposal_Reverts_WhenNonProposerAttemptsToCancelPendingProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -770,7 +770,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposerCannotCancelActiveProposal() public {
+    function test_CancelProposal_Reverts_WhenProposerAttemptsToCancelActiveProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

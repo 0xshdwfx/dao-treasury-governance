@@ -206,7 +206,7 @@ contract ShadowGovernorTest is Test {
     /// Proposal Lifecycle ///
     /////////////////////////
 
-    function test_ProposalBecomesActiveAfterVotingDelay() public {
+    function test_ReadProposalState_ReturnsActive_WhenVotingDelayHasElapsed() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -247,7 +247,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalBecomesDefeatedWhenVotingPeriodEndsWithoutVotes() public {
+    function test_ReadProposalState_ReturnsDefeated_WhenVotingPeriodEndsWithoutVotes() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -296,7 +296,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalSucceedsWhenForVotesReachQuorumAndExceedAgainstVotes() public {
+    function test_ReadProposalState_ReturnsSucceeded_WhenForVotesReachQuorumAndExceedAgainstVotes() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -347,7 +347,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalDefeatedWhenAgainstVotesExceedForVotesDespiteQuorum() public {
+    function test_ReadProposalState_ReturnsDefeated_WhenAgainstVotesExceedForVotesDespiteQuorum() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -424,7 +424,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalDefeatedWhenForVotesFailToReachQuorum() public {
+    function test_ReadProposalState_ReturnsDefeated_WhenForVotesRemainBelowQuorum() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -475,7 +475,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalDefeatedWhenForVotesAreOneUnitBelowQuorum() public {
+    function test_ReadProposalState_ReturnsDefeated_WhenForVotesAreOneBaseUnitBelowQuorum() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -527,7 +527,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalDefeatedWhenForAndAgainstVotesAreTied() public {
+    function test_ReadProposalState_ReturnsDefeated_WhenForAndAgainstVotesAreTiedDespiteQuorum() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -605,7 +605,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_ProposalSucceedsWhenForAndAbstainVotesReachQuorum() public {
+    function test_ReadProposalState_ReturnsSucceeded_WhenForAndAbstainVotesTogetherReachQuorum() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

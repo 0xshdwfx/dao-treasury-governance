@@ -1392,7 +1392,7 @@ contract ShadowGovernorTest is Test {
     /// Timelock Queueing ///
     ////////////////////////
 
-    function test_SucceededProposalCanBeQueuedInTimelock() public {
+    function test_QueueProposal_SetsQueuedState_WhenProposalHasSucceeded() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1453,7 +1453,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_SucceededProposalCanBeQueuedByAnyone() public {
+    function test_QueueProposal_AllowsOrdinaryUser_WhenProposalHasSucceeded() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1516,7 +1516,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_DefeatedProposalCannotBeQueued() public {
+    function test_QueueProposal_Reverts_WhenProposalIsDefeated() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1583,7 +1583,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_QueuedProposalEtaMatchesTimelockDelay() public {
+    function test_QueueProposal_SetsExecutionTimeToQueueTimePlusTimelockDelay() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

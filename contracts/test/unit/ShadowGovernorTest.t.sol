@@ -117,7 +117,7 @@ contract ShadowGovernorTest is Test {
     /// Proposal Validation ///
     //////////////////////////
 
-    function test_ProposalCreationRevertsBelowThreshold() public {
+    function test_CreateProposal_Reverts_WhenProposerVotingPowerIsBelowThreshold() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -140,7 +140,7 @@ contract ShadowGovernorTest is Test {
         shadowGovernor.propose(targets, values, calldatas, "Proposal created below threshold");
     }
 
-    function test_ProposalCreationSucceedsAtThreshold() public {
+    function test_CreateProposal_ReturnsNonzeroProposalId_WhenProposerVotingPowerEqualsThreshold() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -169,7 +169,7 @@ contract ShadowGovernorTest is Test {
         assertGt(proposalId, 0, "proposal ID should be greater than zero");
     }
 
-    function test_ProposalCreatedAtThresholdStartsInPendingState() public {
+    function test_CreateProposal_StartsInPendingState_WhenProposerVotingPowerEqualsThreshold() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

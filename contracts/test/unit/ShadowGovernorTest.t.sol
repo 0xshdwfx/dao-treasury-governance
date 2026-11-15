@@ -2028,7 +2028,7 @@ contract ShadowGovernorTest is Test {
     /// Timelock Access Control ///
     //////////////////////////////
 
-    function test_UnauthorizedUserCannotScheduleTimelockOperation() public {
+    function test_ScheduleTimelockOperation_Reverts_WhenCallerLacksProposerRole() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -2055,7 +2055,7 @@ contract ShadowGovernorTest is Test {
     /// Governance Settings Access Control ///
     /////////////////////////////////////////
 
-    function test_OrdinaryUserCannotChangeVotingDelay() public {
+    function test_ChangeVotingDelay_Reverts_WhenCalledDirectlyByOrdinaryUser() public {
         uint48 newVotingDelay = 2 minutes;
 
         vm.prank(ordinaryUser);
@@ -2071,7 +2071,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_TimelockCannotChangeVotingDelayOutsideGovernorExecution() public {
+    function test_ChangeVotingDelay_Reverts_WhenTimelockCallsOutsideProposalExecution() public {
         uint48 newVotingDelay = 2 minutes;
 
         vm.prank(address(timelockController));

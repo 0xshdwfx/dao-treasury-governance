@@ -829,7 +829,7 @@ contract ShadowGovernorTest is Test {
     /// Voting ///
     //////////////
 
-    function test_ActiveProposalRecordsForVoteFromDelegatedProposer() public {
+    function test_CastVote_RecordsForVotingWeight_WhenDelegatedProposerVotesOnActiveProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -882,7 +882,7 @@ contract ShadowGovernorTest is Test {
         assertEq(abstainVotes, 0, "abstainVotes should equal 0");
     }
 
-    function test_ActiveProposalRecordsAgainstVoteFromDelegatedProposer() public {
+    function test_CastVote_RecordsAgainstVotingWeight_WhenDelegatedProposerVotesOnActiveProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -935,7 +935,7 @@ contract ShadowGovernorTest is Test {
         assertEq(abstainVotes, 0, "abstainVotes should equal 0");
     }
 
-    function test_ActiveProposalRecordsAbstainVoteFromDelegatedProposer() public {
+    function test_CastVote_RecordsAbstainVotingWeight_WhenDelegatedProposerVotesOnActiveProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -988,7 +988,7 @@ contract ShadowGovernorTest is Test {
         assertEq(abstainVotes, threshold, "abstainVotes should equal the proposal threshold");
     }
 
-    function test_VoterCannotCastMoreThanOneVote() public {
+    function test_CastVote_Reverts_WhenVoterHasAlreadyVotedOnProposal() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1035,7 +1035,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_VoterCannotCastVoteWithInvalidSupportType() public {
+    function test_CastVote_Reverts_WhenSupportTypeIsInvalid() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1080,7 +1080,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_PendingProposalCannotReceiveVotes() public {
+    function test_CastVote_Reverts_WhenProposalIsPending() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1126,7 +1126,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_ProposalCannotReceiveVotesAfterVotingPeriodEnds() public {
+    function test_CastVote_Reverts_WhenVotingPeriodHasEnded() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1188,7 +1188,7 @@ contract ShadowGovernorTest is Test {
         vm.stopPrank();
     }
 
-    function test_VotingWeightExcludesTokensReceivedAfterProposalSnapshot() public {
+    function test_CastVote_IgnoresTokensReceived_WhenTransferOccursAfterSnapshot() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1254,7 +1254,7 @@ contract ShadowGovernorTest is Test {
         assertEq(abstainVotes, 0, "abstainVotes should equal 0");
     }
 
-    function test_VotingWeightPreservedAfterPostSnapshotTokenTransfer() public {
+    function test_CastVote_KeepsOriginalVotingPower_WhenTokensAreSentAfterSnapshot() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -1315,7 +1315,7 @@ contract ShadowGovernorTest is Test {
         assertEq(abstainVotes, 0, "abstainVotes should equal 0");
     }
 
-    function test_PostSnapshotTokenRecipientCannotReuseVotingPower() public {
+    function test_CastVote_CountsZeroVotes_WhenReceivedTokensWereAlreadyUsedToVote() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);

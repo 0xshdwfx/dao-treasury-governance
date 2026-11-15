@@ -50,27 +50,27 @@ contract ShadowGovernorTest is Test {
     /// Governor Configuration ///
     /////////////////////////////
 
-    function test_GovernorNameMatchesSpecification() public view {
+    function test_ReadGovernorName_ReturnsConfiguredName() public view {
         assertEq(shadowGovernor.name(), "Shadow Governor", "Governor name should be Shadow Governor");
     }
 
-    function test_VotingDelayMatchesSpecification() public view {
+    function test_ReadVotingDelay_ReturnsInitialOneMinuteDelay() public view {
         assertEq(shadowGovernor.votingDelay(), 1 minutes, "Governor voting delay should be 1 minute");
     }
 
-    function test_VotingPeriodMatchesSpecification() public view {
+    function test_ReadVotingPeriod_ReturnsInitialFiveMinutePeriod() public view {
         assertEq(shadowGovernor.votingPeriod(), 5 minutes, "Governor voting period should be 5 minutes");
     }
 
-    function test_ProposalThresholdMatchesSpecification() public view {
+    function test_ReadProposalThreshold_ReturnsInitialTenThousandVotingUnits() public view {
         assertEq(shadowGovernor.proposalThreshold(), 10_000e18, "Governor proposal threshold should equal 10,000 SHDW");
     }
 
-    function test_QuorumMatchesSpecification() public view {
+    function test_ReadQuorumConstant_ReturnsFortyThousandVotingUnits() public view {
         assertEq(shadowGovernor.QUORUM(), 40_000e18, "Governor quorum should equal 40,000 voting units");
     }
 
-    function test_QuorumFunctionReturnsFixedQuorum() public view {
+    function test_ReadQuorum_ReturnsFixedQuorum_WhenQueriedAtDifferentTimepoints() public view {
         assertEq(shadowGovernor.quorum(0), shadowGovernor.QUORUM(), "Quorum function should return 40,000 voting units");
         assertEq(
             shadowGovernor.quorum(1000), shadowGovernor.QUORUM(), "Quorum function should return 40,000 voting units"
@@ -82,11 +82,11 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_TimelockDelayMatchesSpecification() public view {
+    function test_ReadTimelockMinimumDelay_ReturnsInitialTwoMinuteDelay() public view {
         assertEq(timelockController.getMinDelay(), 2 minutes, "timelock delay must be equal to 2 minutes");
     }
 
-    function test_GovernorUsesConfiguredVotingToken() public view {
+    function test_ReadVotingToken_ReturnsConfiguredShadowTokenAddress() public view {
         assertEq(
             address(shadowGovernor.token()),
             address(shadowToken),
@@ -94,7 +94,7 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_GovernorUsesConfiguredTimelock() public view {
+    function test_ReadTimelock_ReturnsConfiguredTimelockControllerAddress() public view {
         assertEq(
             address(shadowGovernor.timelock()),
             address(timelockController),
@@ -102,12 +102,12 @@ contract ShadowGovernorTest is Test {
         );
     }
 
-    function test_GovernorUsesTimestampClock() public view {
+    function test_ReadGovernorClock_ReturnsTimestampModeAndCurrentTimestamp() public view {
         assertEq(shadowGovernor.CLOCK_MODE(), "mode=timestamp", "Governor clock mode should be timestamp");
         assertEq(shadowGovernor.clock(), block.timestamp, "Governor clock should equal the current block timestamp");
     }
 
-    function test_GovernorRequiresProposalQueueing() public view {
+    function test_CheckProposalQueueingRequirement_ReturnsTrue() public view {
         assertTrue(
             shadowGovernor.proposalNeedsQueuing(0), "Governor should require proposals to be queued before execution"
         );

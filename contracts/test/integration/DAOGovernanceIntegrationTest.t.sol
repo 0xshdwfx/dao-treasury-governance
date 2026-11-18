@@ -165,4 +165,97 @@ contract DAOGovernanceIntegrationTest is Test {
             "Recipient ETH balance should increase by the approved amount"
         );
     }
+
+    function test_ExecuteProposal_TransfersTreasuryERC20_WhenApprovedAndTimelockDelayHasElapsed() public {
+        uint256 transferAmount = 100e18;
+
+        bool transferSuccess = shadowToken.transfer(address(treasury), transferAmount);
+        assertTrue(transferSuccess, "SHDW token transfer to Treasury should succeed");
+
+        uint256 treasuryTokenBalanceBefore = shadowToken.balanceOf(address(treasury));
+        uint256 recipientTokenBalanceBefore = shadowToken.balanceOf(address(recipient));
+
+        uint256 quorum = shadowGovernor.QUORUM();
+
+        bool success = shadowToken.transfer(proposer, quorum);
+        assertTrue(success, "SHDW quorum transfer should succeed");
+
+        vm.startPrank(proposer);
+        shadowToken.delegate(proposer);
+
+        vm.warp(block.timestamp + 1);
+
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(treasury);
+        values[0] = 0;
+        calldatas[0] =
+            abi.encodeCall(treasury.transferERC20, (address(shadowToken), address(recipient), transferAmount));
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Transfer 100 SHDW to recipient");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(shadowGovernor.proposalSnapshot(proposalId) + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.warp(shadowGovernor.proposalDeadline(proposalId) + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Succeeded),
+            "proposal state should be Succeeded after voting period ends"
+        );
+
+        bytes32 descriptionHash = keccak256(bytes("Transfer 100 SHDW to recipient"));
+
+        shadowGovernor.queue(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should be Queued"
+        );
+
+        vm.warp(shadowGovernor.proposalEta(proposalId));
+
+        vm.stopPrank();
+
+        vm.prank(ordinaryUser);
+
+        shadowGovernor.execute(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Executed),
+            "proposal state should be Executed after timelock delay"
+        );
+
+        uint256 treasuryTokenBalanceAfter = shadowToken.balanceOf(address(treasury));
+        uint256 recipientTokenBalanceAfter = shadowToken.balanceOf(address(recipient));
+
+        assertEq(
+            treasuryTokenBalanceAfter,
+            treasuryTokenBalanceBefore - transferAmount,
+            "Treasury SHDW balance should decrease by the approved amount"
+        );
+        assertEq(
+            recipientTokenBalanceAfter,
+            recipientTokenBalanceBefore + transferAmount,
+            "Recipient SHDW balance should increase by the approved amount"
+        );
+    }
 }

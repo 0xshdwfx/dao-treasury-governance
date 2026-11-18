@@ -7,6 +7,7 @@ import {ShadowToken} from "../../src/ShadowToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {ShadowGovernor} from "../../src/ShadowGovernor.sol";
 import {Treasury} from "../../src/Treasury.sol";
+import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 contract DAOGovernanceIntegrationTest is Test {
     ShadowToken public shadowToken;
@@ -14,8 +15,16 @@ contract DAOGovernanceIntegrationTest is Test {
     ShadowGovernor public shadowGovernor;
     Treasury public treasury;
 
+    address public proposer = makeAddr("proposer");
+    address public recipient = makeAddr("recipient");
+    address public ordinaryUser = makeAddr("ordinaryUser");
+
     string public constant GOVERNOR_NAME = "Shadow Governor";
     uint256 public constant TIMELOCK_DELAY = 2 minutes;
+    uint8 public constant AGAINST_VOTE = 0;
+    uint8 public constant FOR_VOTE = 1;
+    uint8 public constant ABSTAIN_VOTE = 2;
+    uint8 public constant INVALID_VOTE = 3;
 
     function setUp() public {
         address[] memory proposers = new address[](0);
@@ -51,7 +60,7 @@ contract DAOGovernanceIntegrationTest is Test {
         );
 
         assertTrue(
-            timelockController.hasRole(proposerRole, address(shGovernor)),
+            timelockController.hasRole(proposerRole, address(shadowGovernor)),
             "Governor should have permission to schedule Timelock operations"
         );
 
@@ -63,6 +72,97 @@ contract DAOGovernanceIntegrationTest is Test {
         assertFalse(
             timelockController.hasRole(defaultAdminRole, address(this)),
             "Test contract should no longer hold the temporary Timelock admin role"
+        );
+    }
+
+    function test_ExecuteProposal_TransfersTreasuryETH_WhenApprovedAndTimelockDelayHasElapsed() public {
+        uint256 ethAmount = 1 ether;
+
+        deal(address(treasury), ethAmount);
+
+        uint256 treasuryEthBalanceBefore = address(treasury).balance;
+        uint256 recipientEthBalanceBefore = recipient.balance;
+
+        uint256 quorum = shadowGovernor.QUORUM();
+
+        bool success = shadowToken.transfer(proposer, quorum);
+        assertTrue(success, "SHDW quorum transfer should succeed");
+
+        vm.startPrank(proposer);
+        shadowToken.delegate(proposer);
+
+        vm.warp(block.timestamp + 1);
+
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(treasury);
+        values[0] = 0;
+        calldatas[0] = abi.encodeCall(treasury.transferEth, (payable(recipient), ethAmount));
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Transfer 1 ether to recipient");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(shadowGovernor.proposalSnapshot(proposalId) + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.warp(shadowGovernor.proposalDeadline(proposalId) + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Succeeded),
+            "proposal state should be Succeeded after voting period ends"
+        );
+
+        bytes32 descriptionHash = keccak256(bytes("Transfer 1 ether to recipient"));
+
+        shadowGovernor.queue(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should be Queued"
+        );
+
+        vm.warp(shadowGovernor.proposalEta(proposalId));
+
+        vm.stopPrank();
+
+        vm.prank(ordinaryUser);
+
+        shadowGovernor.execute(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Executed),
+            "proposal state should be Executed after timelock delay"
+        );
+
+        uint256 treasuryEthBalanceAfter = address(treasury).balance;
+        uint256 recipientEthBalanceAfter = recipient.balance;
+
+        assertEq(
+            treasuryEthBalanceAfter,
+            treasuryEthBalanceBefore - ethAmount,
+            "Treasury ETH balance should decrease by the approved amount"
+        );
+        assertEq(
+            recipientEthBalanceAfter,
+            recipientEthBalanceBefore + ethAmount,
+            "Recipient ETH balance should increase by the approved amount"
         );
     }
 }

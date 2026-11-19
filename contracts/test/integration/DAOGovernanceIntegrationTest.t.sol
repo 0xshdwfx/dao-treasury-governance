@@ -258,4 +258,89 @@ contract DAOGovernanceIntegrationTest is Test {
             "Recipient SHDW balance should increase by the approved amount"
         );
     }
+
+    function test_ExecuteProposal_KeepsFundsAndProposalQueued_WhenTreasuryWithdrawalFails() public {
+        uint256 ethAmount = 1 ether;
+
+        deal(address(treasury), ethAmount);
+
+        uint256 treasuryEthBalanceBefore = address(treasury).balance;
+        uint256 recipientEthBalanceBefore = recipient.balance;
+
+        uint256 quorum = shadowGovernor.QUORUM();
+
+        bool success = shadowToken.transfer(proposer, quorum);
+        assertTrue(success, "SHDW quorum transfer should succeed");
+
+        vm.startPrank(proposer);
+        shadowToken.delegate(proposer);
+
+        vm.warp(block.timestamp + 1);
+
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(treasury);
+        values[0] = 0;
+        calldatas[0] = abi.encodeCall(treasury.transferEth, (payable(recipient), ethAmount + 1));
+
+        uint256 proposalId = shadowGovernor.propose(targets, values, calldatas, "Withdraw more ETH than Treasury holds");
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "proposal should start in Pending state"
+        );
+
+        vm.warp(shadowGovernor.proposalSnapshot(proposalId) + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "proposal should be Active after voting delay"
+        );
+
+        shadowGovernor.castVote(proposalId, FOR_VOTE);
+
+        vm.warp(shadowGovernor.proposalDeadline(proposalId) + 1);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Succeeded),
+            "proposal state should be Succeeded after voting period ends"
+        );
+
+        bytes32 descriptionHash = keccak256(bytes("Withdraw more ETH than Treasury holds"));
+
+        shadowGovernor.queue(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should be Queued"
+        );
+
+        vm.warp(shadowGovernor.proposalEta(proposalId));
+
+        vm.stopPrank();
+
+        vm.prank(ordinaryUser);
+
+        vm.expectRevert(Treasury.Treasury__TransferAmountExceedsTreasuryBalance.selector);
+
+        shadowGovernor.execute(targets, values, calldatas, descriptionHash);
+
+        assertEq(
+            uint256(shadowGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Queued),
+            "proposal state should still be Queued"
+        );
+
+        uint256 treasuryEthBalanceAfter = address(treasury).balance;
+        uint256 recipientEthBalanceAfter = recipient.balance;
+
+        assertEq(treasuryEthBalanceAfter, treasuryEthBalanceBefore, "Treasury ETH balance should remain unchanged");
+        assertEq(recipientEthBalanceAfter, recipientEthBalanceBefore, "Recipient ETH balance should remain unchanged");
+    }
 }

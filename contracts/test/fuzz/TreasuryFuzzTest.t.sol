@@ -40,4 +40,28 @@ contract TreasuryFuzzTest is Test {
             "Recipient balace should increase by withdrawal amount"
         );
     }
+
+    function testFuzz_WithdrawTreasuryETH_Reverts_WhenAmountExceedsTreasuryBalance(
+        uint256 treasuryBalance,
+        uint256 withdrawalAmount
+    ) public {
+        treasuryBalance = bound(treasuryBalance, 1 wei, type(uint128).max);
+        withdrawalAmount = bound(withdrawalAmount, treasuryBalance + 1, type(uint256).max);
+
+        deal(address(treasury), treasuryBalance);
+
+        uint256 treasuryBalanceBefore = address(treasury).balance;
+        uint256 recipientBalanceBefore = recipient.balance;
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__TransferAmountExceedsTreasuryBalance.selector);
+        treasury.transferEth(payable(recipient), withdrawalAmount);
+
+        uint256 treasuryBalanceAfter = address(treasury).balance;
+        uint256 recipientBalanceAfter = recipient.balance;
+
+        assertEq(treasuryBalanceAfter, treasuryBalanceBefore, "Treasury balance should remain the same");
+        assertEq(recipientBalanceAfter, recipientBalanceBefore, "Recipient balance should remain the same");
+    }
 }

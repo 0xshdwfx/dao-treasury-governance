@@ -6,4 +6,5 @@ solc_version = "0.8.26"
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
+no_match_coverage = "^test/mocks/"
 

@@ -99,4 +99,32 @@ contract TreasuryFuzzTest is Test {
             "Recipient token balance should increase by withdrawal amount"
         );
     }
+
+    function testFuzz_WithdrawTreasuryERC20_Reverts_WhenAmountExceedsTreasuryTokenBalance(
+        uint256 treasuryTokenBalance,
+        uint256 withdrawalAmount
+    ) public {
+        treasuryTokenBalance = bound(treasuryTokenBalance, 1, shadowToken.totalSupply());
+        withdrawalAmount = bound(withdrawalAmount, treasuryTokenBalance + 1, type(uint256).max);
+
+        bool success = shadowToken.transfer(address(treasury), treasuryTokenBalance);
+        assertTrue(success, "SHDW token transfer should succeed");
+
+        uint256 treasuryTokenBalanceBefore = shadowToken.balanceOf(address(treasury));
+        uint256 recipientTokenBalanceBefore = shadowToken.balanceOf(recipient);
+
+        vm.prank(timelockOwner);
+
+        vm.expectRevert(Treasury.Treasury__TransferAmountExceedsTokenBalance.selector);
+        treasury.transferERC20(address(shadowToken), recipient, withdrawalAmount);
+
+        uint256 treasuryTokenBalanceAfter = shadowToken.balanceOf(address(treasury));
+        uint256 recipientTokenBalanceAfter = shadowToken.balanceOf(recipient);
+
+        assertEq(treasuryTokenBalanceAfter, treasuryTokenBalanceBefore, "Treasury token balance should remain the same");
+
+        assertEq(
+            recipientTokenBalanceAfter, recipientTokenBalanceBefore, "Recipient token balance should remain the same"
+        );
+    }
 }

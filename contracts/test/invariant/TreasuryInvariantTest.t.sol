@@ -15,5 +15,21 @@ contract TreasuryInvariantTest is Test {
         treasury = new Treasury(timelockOwner);
 
         handler = new TreasuryHandler(treasury, timelockOwner);
+
+        targetContract(address(handler));
+
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = TreasuryHandler.depositEth.selector;
+        selectors[1] = TreasuryHandler.withdrawEth.selector;
+
+        targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
+    }
+
+    function invariant_TreasuryEthBalanceMatchesTrackedDepositsMinusWithdrawals() public view {
+        assertEq(
+            address(treasury).balance,
+            handler.totalEthDeposited() - handler.totalEthWithdrawn(),
+            "Treasury ETH balance must equal total deposited minus total withdrawn"
+        );
     }
 }

@@ -7,8 +7,10 @@ import {Treasury} from "../../../src/Treasury.sol";
 contract TreasuryHandler is Test {
     Treasury public immutable TREASURY;
     address public immutable TIMELOCK_OWNER;
+    address public recipient = makeAddr("recipient");
 
     uint256 public totalEthDeposited;
+    uint256 public totalEthWithdrawn;
 
     constructor(Treasury _treasury, address _timelockOwner) {
         TREASURY = _treasury;
@@ -24,5 +26,19 @@ contract TreasuryHandler is Test {
         assertTrue(success, "ETH transfer to TREASURY should succeed");
 
         totalEthDeposited += amount;
+    }
+
+    function withdrawEth(uint256 amount) external {
+        uint256 treasuryEthBalance = address(TREASURY).balance;
+
+        if (treasuryEthBalance == 0) return;
+
+        amount = bound(amount, 1 wei, treasuryEthBalance);
+
+        vm.prank(TIMELOCK_OWNER);
+
+        TREASURY.transferEth(payable(recipient), amount);
+
+        totalEthWithdrawn += amount;
     }
 }

@@ -8,3 +8,10 @@ remappings = [
 ]
 no_match_coverage = "^test/mocks/"
 
+[profile.default.fuzz]
+runs = 256
+
+[profile.default.invariant]
+runs = 256
+depth = 500
+fail_on_revert = true

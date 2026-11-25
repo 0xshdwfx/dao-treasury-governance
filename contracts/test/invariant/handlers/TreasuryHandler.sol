@@ -60,6 +60,13 @@ contract TreasuryHandler is Test {
         totalTokenDeposited += amount;
     }
 
+    /**
+     * @notice Withdraws a bounded SHDW amount as the authorised Treasury owner.
+     * @dev Returns tokens to this handler so subsequent generated actions can
+     *      deposit them again, preventing token exhaustion from reducing the
+     *      campaign to no-op calls. This is a test-harness choice for exercising
+     *      Treasury accounting, not a production withdrawal-recipient policy.
+     */
     function withdrawToken(uint256 amount) external {
         uint256 treasuryTokenBalance = SHADOW_TOKEN.balanceOf(address(TREASURY));
 

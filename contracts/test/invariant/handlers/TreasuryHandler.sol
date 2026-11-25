@@ -59,4 +59,18 @@ contract TreasuryHandler is Test {
 
         totalTokenDeposited += amount;
     }
+
+    function withdrawToken(uint256 amount) external {
+        uint256 treasuryTokenBalance = SHADOW_TOKEN.balanceOf(address(TREASURY));
+
+        if (treasuryTokenBalance == 0) return;
+
+        amount = bound(amount, 1, treasuryTokenBalance);
+
+        vm.prank(TIMELOCK_OWNER);
+
+        TREASURY.transferERC20(address(SHADOW_TOKEN), recipient, amount);
+
+        totalTokenWithdrawn += amount;
+    }
 }

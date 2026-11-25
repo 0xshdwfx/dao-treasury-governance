@@ -46,4 +46,17 @@ contract TreasuryHandler is Test {
 
         totalEthWithdrawn += amount;
     }
+
+    function depositToken(uint256 amount) external {
+        uint256 handlerTokenBalance = SHADOW_TOKEN.balanceOf(address(this));
+
+        if (handlerTokenBalance == 0) return;
+
+        amount = bound(amount, 1, handlerTokenBalance);
+
+        bool success = SHADOW_TOKEN.transfer(address(TREASURY), amount);
+        assertTrue(success, "SHDW token transfer from handler to Treasury should succeed");
+
+        totalTokenDeposited += amount;
+    }
 }

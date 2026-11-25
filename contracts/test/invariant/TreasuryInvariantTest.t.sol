@@ -20,9 +20,11 @@ contract TreasuryInvariantTest is Test {
 
         targetContract(address(handler));
 
-        bytes4[] memory selectors = new bytes4[](2);
+        bytes4[] memory selectors = new bytes4[](4);
         selectors[0] = TreasuryHandler.depositEth.selector;
         selectors[1] = TreasuryHandler.withdrawEth.selector;
+        selectors[2] = TreasuryHandler.depositToken.selector;
+        selectors[3] = TreasuryHandler.withdrawToken.selector;
 
         targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
 
@@ -35,6 +37,14 @@ contract TreasuryInvariantTest is Test {
             address(treasury).balance,
             handler.totalEthDeposited() - handler.totalEthWithdrawn(),
             "Treasury ETH balance must equal total deposited minus total withdrawn"
+        );
+    }
+
+    function invariant_TreasuryTokenBalanceMatchesTrackedDepositsMinusWithdrawals() public view {
+        assertEq(
+            shadowToken.balanceOf(address(treasury)),
+            handler.totalTokenDeposited() - handler.totalTokenWithdrawn(),
+            "Treasury token balance must equal total deposited minus total withdrawn"
         );
     }
 }

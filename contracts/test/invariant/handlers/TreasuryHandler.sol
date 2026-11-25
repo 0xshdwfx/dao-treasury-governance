@@ -3,18 +3,23 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {Treasury} from "../../../src/Treasury.sol";
+import {ShadowToken} from "../../../src/ShadowToken.sol";
 
 contract TreasuryHandler is Test {
     Treasury public immutable TREASURY;
+    ShadowToken public immutable SHADOW_TOKEN;
     address public immutable TIMELOCK_OWNER;
     address public recipient = makeAddr("recipient");
 
     uint256 public totalEthDeposited;
     uint256 public totalEthWithdrawn;
+    uint256 public totalTokenDeposited;
+    uint256 public totalTokenWithdrawn;
 
-    constructor(Treasury _treasury, address _timelockOwner) {
+    constructor(Treasury _treasury, address _timelockOwner, ShadowToken _shadowToken) {
         TREASURY = _treasury;
         TIMELOCK_OWNER = _timelockOwner;
+        SHADOW_TOKEN = _shadowToken;
     }
 
     function depositEth(uint256 amount) external {

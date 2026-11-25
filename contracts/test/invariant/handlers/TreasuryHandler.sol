@@ -69,7 +69,7 @@ contract TreasuryHandler is Test {
 
         vm.prank(TIMELOCK_OWNER);
 
-        TREASURY.transferERC20(address(SHADOW_TOKEN), recipient, amount);
+        TREASURY.transferERC20(address(SHADOW_TOKEN), address(this), amount);
 
         totalTokenWithdrawn += amount;
     }

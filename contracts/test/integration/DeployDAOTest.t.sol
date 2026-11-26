@@ -48,4 +48,11 @@ contract DeployDAOTest is Test {
             "Deployer should not retain the Timelock admin role"
         );
     }
+
+    function test_DeployDAO_KeepsTimelockAdminRole() public view {
+        assertTrue(
+            timelock.hasRole(timelock.DEFAULT_ADMIN_ROLE(), address(timelock)),
+            "Timelock should retain its own admin role"
+        );
+    }
 }

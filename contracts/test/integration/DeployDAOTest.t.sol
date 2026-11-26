@@ -55,4 +55,8 @@ contract DeployDAOTest is Test {
             "Timelock should retain its own admin role"
         );
     }
+
+    function test_DeployDAO_SetsTwoMinuteTimelockDelay() public view {
+        assertEq(timelock.getMinDelay(), 2 minutes, "Timelock minimum delay should be two minutes");
+    }
 }

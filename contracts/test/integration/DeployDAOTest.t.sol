@@ -41,4 +41,11 @@ contract DeployDAOTest is Test {
     function test_DeployDAO_OpensTimelockExecution() public view {
         assertTrue(timelock.hasRole(timelock.EXECUTOR_ROLE(), address(0)), "Timelock executor role should be open");
     }
+
+    function test_DeployDAO_RemovesDeployerAdminRole() public view {
+        assertFalse(
+            timelock.hasRole(timelock.DEFAULT_ADMIN_ROLE(), address(this)),
+            "Deployer should not retain the Timelock admin role"
+        );
+    }
 }

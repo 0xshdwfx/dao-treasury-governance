@@ -59,4 +59,12 @@ contract DeployDAOTest is Test {
     function test_DeployDAO_SetsTwoMinuteTimelockDelay() public view {
         assertEq(timelock.getMinDelay(), 2 minutes, "Timelock minimum delay should be two minutes");
     }
+
+    function test_DeployDAO_ConnectsGovernorToShadowToken() public view {
+        assertEq(
+            address(shadowGovernor.token()),
+            address(shadowToken),
+            "Governor voting token should be the deployed ShadowToken"
+        );
+    }
 }

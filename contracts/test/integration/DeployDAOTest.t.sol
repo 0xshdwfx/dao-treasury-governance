@@ -21,10 +21,20 @@ contract DeployDAOTest is Test {
     }
 
     function test_DeployDAO_AssignsTreasuryOwnershipToTimelock() public view {
-        assertEq(treasury.owner(), address(timelock));
+        assertEq(treasury.owner(), address(timelock), "Treasury owner should be the Timelock");
     }
 
     function test_DeployDAO_GrantsGovernorProposerRole() public view {
-        assertTrue(timelock.hasRole(timelock.PROPOSER_ROLE(), address(shadowGovernor)));
+        assertTrue(
+            timelock.hasRole(timelock.PROPOSER_ROLE(), address(shadowGovernor)),
+            "Governor should have the Timelock proposer role"
+        );
+    }
+
+    function test_DeployDAO_GrantsGovernorCancellerRole() public view {
+        assertTrue(
+            timelock.hasRole(timelock.CANCELLER_ROLE(), address(shadowGovernor)),
+            "Governor should have the Timelock canceller role"
+        );
     }
 }

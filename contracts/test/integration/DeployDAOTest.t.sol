@@ -19,4 +19,8 @@ contract DeployDAOTest is Test {
 
         (shadowToken, timelock, shadowGovernor, treasury) = deployDAO.run();
     }
+
+    function test_DeployDAO_AssignsTreasuryOwnershipToTimelock() public view {
+        assertEq(treasury.owner(), address(timelock));
+    }
 }

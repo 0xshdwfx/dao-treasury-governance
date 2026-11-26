@@ -16,7 +16,7 @@ contract DeployDAO is Script {
         address[] memory executors = new address[](1);
         executors[0] = address(0);
 
-        vm.startBroadcast();
+        vm.startBroadcast(msg.sender);
 
         shadowToken = new ShadowToken();
         timelock = new TimelockController(2 minutes, proposers, executors, msg.sender);

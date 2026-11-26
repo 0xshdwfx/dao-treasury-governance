@@ -37,4 +37,8 @@ contract DeployDAOTest is Test {
             "Governor should have the Timelock canceller role"
         );
     }
+
+    function test_DeployDAO_OpensTimelockExecution() public view {
+        assertTrue(timelock.hasRole(timelock.EXECUTOR_ROLE(), address(0)), "Timelock executor role should be open");
+    }
 }

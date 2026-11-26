@@ -67,4 +67,10 @@ contract DeployDAOTest is Test {
             "Governor voting token should be the deployed ShadowToken"
         );
     }
+
+    function test_DeployDAO_ConnectsGovernorToTimelock() public view {
+        assertEq(
+            address(shadowGovernor.timelock()), address(timelock), "Governor timelock should be the deployed Timelock"
+        );
+    }
 }

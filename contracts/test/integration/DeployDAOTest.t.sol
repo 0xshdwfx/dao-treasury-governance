@@ -73,4 +73,10 @@ contract DeployDAOTest is Test {
             address(shadowGovernor.timelock()), address(timelock), "Governor timelock should be the deployed Timelock"
         );
     }
+
+    function test_DeployDAO_AllocatesEntireTokenSupplyToDeployer() public view {
+        assertEq(
+            shadowToken.balanceOf(address(this)), 1_000_000e18, "Deployer should receive the entire initial SHDW supply"
+        );
+    }
 }

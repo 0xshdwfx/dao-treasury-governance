@@ -23,4 +23,8 @@ contract DeployDAOTest is Test {
     function test_DeployDAO_AssignsTreasuryOwnershipToTimelock() public view {
         assertEq(treasury.owner(), address(timelock));
     }
+
+    function test_DeployDAO_GrantsGovernorProposerRole() public view {
+        assertTrue(timelock.hasRole(timelock.PROPOSER_ROLE(), address(shadowGovernor)));
+    }
 }

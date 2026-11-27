@@ -15,9 +15,9 @@ contract DeployDAOTest is Test {
     Treasury public treasury;
 
     function setUp() public {
-        DeployDAO deployDAO = new DeployDAO();
+        DeployDAO deployDao = new DeployDAO();
 
-        (shadowToken, timelock, shadowGovernor, treasury) = deployDAO.run();
+        (shadowToken, timelock, shadowGovernor, treasury) = deployDao.run();
     }
 
     function test_DeployDAO_AssignsTreasuryOwnershipToTimelock() public view {

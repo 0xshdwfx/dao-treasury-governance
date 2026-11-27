@@ -20,7 +20,7 @@ contract TreasuryTest is Test {
     FalseReturnERC20 public falseReturnERC20;
     NoReturnERC20 public noReturnERC20;
     FeeOnTransferERC20 public feeOnTransferERC20;
-    AcceptingETHRecipient public acceptingETHRecipient;
+    AcceptingETHRecipient public acceptingEthRecipient;
     RevertingERC20 public revertingERC20;
 
     address public timelockOwner = makeAddr("timelockOwner");
@@ -41,7 +41,7 @@ contract TreasuryTest is Test {
         falseReturnERC20 = new FalseReturnERC20();
         noReturnERC20 = new NoReturnERC20();
         feeOnTransferERC20 = new FeeOnTransferERC20(feeCollector);
-        acceptingETHRecipient = new AcceptingETHRecipient();
+        acceptingEthRecipient = new AcceptingETHRecipient();
         revertingERC20 = new RevertingERC20();
 
         vm.prank(tokenDeployer);
@@ -254,19 +254,19 @@ contract TreasuryTest is Test {
     function test_WithdrawTreasuryETH_TransfersRequestedAmount_WhenRecipientIsPayableContract() public {
         deal(address(treasury), ETH_AMOUNT);
 
-        uint256 acceptingETHRecipientContractBalanceBefore = address(acceptingETHRecipient).balance;
+        uint256 acceptingEthRecipientContractBalanceBefore = address(acceptingEthRecipient).balance;
 
         vm.expectEmit(true, false, false, true, address(treasury));
-        emit EthTransferred(address(acceptingETHRecipient), ETH_AMOUNT);
+        emit EthTransferred(address(acceptingEthRecipient), ETH_AMOUNT);
 
         vm.prank(timelockOwner);
-        treasury.transferEth(payable(acceptingETHRecipient), ETH_AMOUNT);
+        treasury.transferEth(payable(acceptingEthRecipient), ETH_AMOUNT);
 
         assertEq(address(treasury).balance, 0, "Treasury balance should decrease by the transferred amount");
 
         assertEq(
-            address(acceptingETHRecipient).balance,
-            acceptingETHRecipientContractBalanceBefore + ETH_AMOUNT,
+            address(acceptingEthRecipient).balance,
+            acceptingEthRecipientContractBalanceBefore + ETH_AMOUNT,
             "Recipient balance should increase by transferred amount"
         );
     }
